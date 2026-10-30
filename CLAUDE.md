@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 "CCA – Customer Contact API": a prototype REST API built with Symfony 7.0, API Platform 3.2 (`api-platform/core ^3.2`), Doctrine ORM 3, MySQL 8 and PHPUnit 9.6. There is no frontend and no login; authentication is token-only. The branch `upgrade/docker-symfony-8` is meant for a Docker setup and an upgrade to Symfony 8 — no Docker files exist yet.
 
+## Goals and conventions
+
+- **Goal:** upgrade to Symfony 8.1 and API Platform 5, then add Messenger with RabbitMQ, voters and a CI pipeline.
+- **Upgrade path:** first API Platform 4.4 (fix all deprecations, e.g. `#[ApiFilter]` and `SearchFilter`), then API Platform 5. Symfony 7.0 → 7.4 → 8.1.
+- **Authentication:** custom `ApiTokenAuthenticator` with the `x-api-key` request header (the README wrongly says `api`; fix the README later).
+- **Schema changes** only via Doctrine migrations.
+- **Configuration:** prefer PHP attributes over YAML.
+
 ## Setup and commands
 
 `.gitignore` ignores `/.env*` (including `.env`), so `.env` and `.env.test` must be created locally with at least `APP_ENV`, `APP_SECRET` and `DATABASE_URL`. In test, Doctrine appends `_test` to the DB name (`config/packages/doctrine.yaml`).
