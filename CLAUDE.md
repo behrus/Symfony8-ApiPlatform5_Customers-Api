@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-"CCA – Customer Contact API": a prototype REST API built with Symfony 7.0, API Platform 3.2 (`api-platform/core ^3.2`), Doctrine ORM 3, MySQL 8 and PHPUnit 9.6. There is no frontend and no login; authentication is token-only. The branch `upgrade/docker-symfony-8` is meant for a Docker setup and an upgrade to Symfony 8 — no Docker files exist yet.
+"CCA – Customer Contact API": a prototype REST API built with Symfony 7.0, API Platform 3.2 (`api-platform/core ^3.2`), Doctrine ORM 3, MySQL 8 and PHPUnit 9.6. There is no frontend and no login; authentication is token-only. The branch `upgrade/docker-symfony-8` is meant for a Docker setup and an upgrade to Symfony 8; the Docker setup now exists.
 
 ## Goals and conventions
 
@@ -16,19 +16,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Setup and commands
 
-`.gitignore` ignores `/.env*` (including `.env`), so `.env` and `.env.test` must be created locally with at least `APP_ENV`, `APP_SECRET` and `DATABASE_URL`. In test, Doctrine appends `_test` to the DB name (`config/packages/doctrine.yaml`).
+The app runs in Docker (`Dockerfile`, `compose.yaml`: FrankenPHP + PHP 8.4, MySQL 8.0.36, project name `cca`); the host has PHP 7.4, so run all commands with `docker compose exec web ...`. Web: http://localhost:8080, MySQL on the host: `127.0.0.1:3307`. `.env` and `.env.test` are committed with safe defaults only (secrets go to `.env.local`, which is ignored). In test, Doctrine appends `_test` to the DB name (`config/packages/doctrine.yaml`); the `cca` DB user may use all `cca%` databases (`docker/mysql/init.sql`).
 
 ```bash
-composer install
-php bin/console doctrine:migrations:migrate                 # dev DB
-php bin/console --env=test doctrine:database:create
-php bin/console --env=test doctrine:migrations:migrate      # test DB
-symfony serve -d                                            # API docs: http://127.0.0.1:8000/api
+docker compose up -d --build                                # API docs: http://localhost:8080/api
+docker compose exec web composer install
+docker compose exec web php bin/console doctrine:migrations:migrate -n           # dev DB
+docker compose exec web php bin/console --env=test doctrine:database:create
+docker compose exec web php bin/console --env=test doctrine:migrations:migrate -n  # test DB
 
-php bin/phpunit                                             # all tests
-php bin/phpunit tests/CityTest.php                          # one file
-php bin/phpunit --filter testCreateCitySuccess              # one test
-vendor/bin/phpstan analyse                                  # level 6, config phpstan.dist.neon
+docker compose exec web php bin/phpunit                     # all tests
+docker compose exec web php bin/phpunit tests/CityTest.php  # one file
+docker compose exec web php bin/phpunit --filter testCreateCitySuccess  # one test
+docker compose exec web vendor/bin/phpstan analyse          # level 6, config phpstan.dist.neon
 ```
 
 `phpunit.xml.dist` sets `SYMFONY_DEPRECATIONS_HELPER=disabled`, so deprecations are hidden in test runs. No PHP-CS-Fixer is installed.

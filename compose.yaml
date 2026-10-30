@@ -1,0 +1,45 @@
+name: cca
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    ports:
+      - "8080:80"
+      - "8443:443"
+      - "8443:443/udp"
+    volumes:
+      - .:/app
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      SERVER_NAME: :80
+    depends_on:
+      database:
+        condition: service_healthy
+
+  database:
+    image: mysql:8.0.36
+    environment:
+      MYSQL_DATABASE: cca
+      MYSQL_USER: cca
+      MYSQL_PASSWORD: cca
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  caddy_data:
+  caddy_config:
+  db-data:

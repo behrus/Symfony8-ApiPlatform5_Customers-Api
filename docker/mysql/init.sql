@@ -1,0 +1,2 @@
+GRANT ALL PRIVILEGES ON `cca%`.* TO 'cca'@'%';
+FLUSH PRIVILEGES;

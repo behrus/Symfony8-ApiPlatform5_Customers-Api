@@ -4,6 +4,24 @@
 A prototype for managing customer contacts implemented with Symfony7.0, PlatformApi3 and PHP8.3 with PHPUnit testing.
 
 
+# Docker
+
+PHP 8.4 with FrankenPHP and MySQL 8.0.36. Project name `cca`.
+
+```bash
+docker compose up -d --build
+docker compose exec web composer install
+docker compose exec web php bin/console doctrine:migrations:migrate -n
+docker compose exec web php bin/console --env=test doctrine:database:create
+docker compose exec web php bin/console --env=test doctrine:migrations:migrate -n
+docker compose exec web php bin/phpunit
+```
+
+- API docs: http://localhost:8080/api (HTTPS on 8443). MySQL from the host: `127.0.0.1:3307` (user/password/database `cca`).
+- The container runs as user ID 1000, so `vendor/` and `var/` belong to the host user. For another host user ID: `UID=$(id -u) GID=$(id -g) docker compose up -d --build`.
+- `.env` and `.env.test` are committed with safe defaults only. Put secrets and local overrides in `.env.local`.
+- The MySQL init script (`docker/mysql/init.sql`) runs only on the first start. For an existing volume use `docker compose down -v`.
+
 # Installation/Configuration
 
 Please just run 'composer install' in the terminal. (Composer Version2)
