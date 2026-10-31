@@ -53,6 +53,9 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
+      - name: Static analysis (PHPStan)
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+
       - name: Create test database
         run: php bin/console doctrine:database:create --no-interaction
 
