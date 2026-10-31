@@ -43,6 +43,7 @@ class Country
     #[Groups(['address:read', 'city:write', 'city:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    /** @var Collection<int, City> */
     #[ORM\OneToMany(targetEntity: City::class, mappedBy: 'country', orphanRemoval: true)]
     private Collection $city;
 
@@ -118,12 +119,7 @@ class Country
 
     public function removeCity(City $city): static
     {
-        if ($this->city->removeElement($city)) {
-            // set the owning side to null (unless already changed)
-            if ($city->getCountry() === $this) {
-                $city->setCountry(null);
-            }
-        }
+        $this->city->removeElement($city);
 
         return $this;
     }

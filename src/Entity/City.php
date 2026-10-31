@@ -48,6 +48,7 @@ class City
     #[Groups(['address:read', 'city:read', 'city:write'])]
     private Country $country;
 
+    /** @var Collection<int, Address> */
     #[ORM\OneToMany(
         targetEntity: Address::class,
         mappedBy: 'city',
@@ -134,12 +135,7 @@ class City
 
     public function removeAddress(Address $address): static
     {
-        if ($this->address->removeElement($address)) {
-            // set the owning side to null (unless already changed)
-            if ($address->getCity() === $this) {
-                $address->setCity(null);
-            }
-        }
+        $this->address->removeElement($address);
 
         return $this;
     }

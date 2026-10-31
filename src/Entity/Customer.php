@@ -66,6 +66,7 @@ class Customer
     #[Groups(['address:read', 'city:write', 'city:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    /** @var Collection<int, Address> */
     #[ORM\OneToMany(
         targetEntity: Address::class,
         mappedBy: 'customer',
@@ -170,12 +171,7 @@ class Customer
 
     public function removeAddress(Address $address): static
     {
-        if ($this->address->removeElement($address)) {
-            // set the owning side to null (unless already changed)
-            if ($address->getCustomer() === $this) {
-                $address->setCustomer(null);
-            }
-        }
+        $this->address->removeElement($address);
 
         return $this;
     }

@@ -45,6 +45,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\NotBlank]
     private string $password;
 
+    /** @var Collection<int, ApiToken> */
     #[ORM\OneToMany(
         targetEntity: ApiToken::class,
         mappedBy: 'user',
@@ -162,12 +163,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function removeApiToken(ApiToken $apiToken): static
     {
-        if ($this->apiTokens->removeElement($apiToken)) {
-            // set the owning side to null (unless already changed)
-            if ($apiToken->getUser() === $this) {
-                $apiToken->setUser(null);
-            }
-        }
+        $this->apiTokens->removeElement($apiToken);
 
         return $this;
     }
