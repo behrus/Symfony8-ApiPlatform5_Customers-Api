@@ -9,7 +9,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Goals and conventions
 
 - **Goal:** upgrade to Symfony 8.1 and API Platform 5, then add Messenger with RabbitMQ, voters and a CI pipeline.
-- **Upgrade path:** first API Platform 4.4 (fix all deprecations, e.g. `#[ApiFilter]` and `SearchFilter`), then API Platform 5. Symfony 7.0 → 7.4 → 8.1.
+- **Upgrade path:** API Platform 4.4 requires Symfony `^7.4 || ^8.0` (checked with `composer why-not`), so the order is: Symfony 7.0 → 7.4, then API Platform 3.2 → 4.4 (fix deprecations, e.g. `#[ApiFilter]` and `SearchFilter`), then API Platform 5, then Symfony 8.1. Before replacing `SearchFilter`, add characterization tests for the `Customer` filters and ordering.
+- **Planned design decisions (not implemented yet, decide in the test/voter step):**
+  - Country → City and City → Address: no cascade delete. Refuse to delete a parent that still has children (`409 Conflict`; the DB foreign keys already have no `ON DELETE CASCADE`). Today `orphanRemoval: true` implies `cascade: remove`, so deleting a Country removes its Cities and Addresses.
+  - Customer: never hard-delete (traceability, analysis). Soft delete or a status field, plus anonymisation on request (GDPR right to erasure). Mind the unique `email` constraint.
+  - Keep cascade only where the child is part of the parent: `User` → `ApiToken`.
+  - First add a test that pins the current cascade behaviour, then change it on purpose.
 - **Authentication:** custom `ApiTokenAuthenticator` with the `x-api-key` request header (the README wrongly says `api`; fix the README later).
 - **Schema changes** only via Doctrine migrations.
 - **Configuration:** prefer PHP attributes over YAML.
@@ -28,10 +33,10 @@ docker compose exec web php bin/console --env=test doctrine:migrations:migrate -
 docker compose exec web php bin/phpunit                     # all tests
 docker compose exec web php bin/phpunit tests/CityTest.php  # one file
 docker compose exec web php bin/phpunit --filter testCreateCitySuccess  # one test
-docker compose exec web vendor/bin/phpstan analyse          # level 6, config phpstan.dist.neon
+docker compose exec web vendor/bin/phpstan analyse --memory-limit=1G  # level 6, config phpstan.dist.neon (128M is too little)
 ```
 
-`phpunit.xml.dist` sets `SYMFONY_DEPRECATIONS_HELPER=disabled`, so deprecations are hidden in test runs. No PHP-CS-Fixer is installed.
+`phpunit.xml.dist` sets `SYMFONY_DEPRECATIONS_HELPER=max[self]=0&max[direct]=0`: a deprecation triggered by our code (`self`) or by our call of a deprecated vendor API (`direct`) fails the run; `indirect` ones from `vendor/` are only listed. A value set in the shell wins over the `<env>` entry. No PHP-CS-Fixer is installed. CI: `.github/workflows/ci.yml` (PHPStan, migrations, PHPUnit).
 
 ## Architecture
 
