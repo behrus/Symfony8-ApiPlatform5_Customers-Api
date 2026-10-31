@@ -14,8 +14,7 @@ class CityFixtures extends Fixture implements OrderedFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
-        /* @var Country $country */
-        $country = $this->getReference('country');
+        $country = $this->getReference('country', Country::class);
 
         $city = new City();
         $city->setName("Berlin");
