@@ -25,3 +25,8 @@
 /phpstan.neon
 ###< phpstan/phpstan ###
 
+
+###> claude-code ###
+/CLAUDE.local.md
+/.claude/settings.local.json
+###< claude-code ###
