@@ -11,6 +11,7 @@ use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
 use Liip\TestFixturesBundle\Services\DatabaseTools\AbstractDatabaseTool;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -40,10 +41,9 @@ class CustomerFilterTest extends ApiTestCase
     }
 
     /**
-     * @dataProvider searchProvider
-     *
      * @param list<string> $expectedNames
      */
+    #[DataProvider('searchProvider')]
     public function testSearch(string $query, array $expectedNames): void
     {
         $member = $this->getCustomers($query);
@@ -54,7 +54,7 @@ class CustomerFilterTest extends ApiTestCase
     /**
      * @return array<string, array{string, list<string>}>
      */
-    public function searchProvider(): array
+    public static function searchProvider(): array
     {
         return [
             'name is partial' => ['name=schmi', ['Anna Schmidt', 'Bernd Schmitt']],

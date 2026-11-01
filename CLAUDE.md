@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-"CCA – Customer Contact API": a prototype REST API built with Symfony 7.4, API Platform 5.0 (`api-platform/core ^5.0`), Doctrine ORM 3, MySQL 8 and PHPUnit 9.6. There is no frontend and no login; authentication is token-only. The branch `upgrade/docker-symfony-8` is meant for a Docker setup and an upgrade to Symfony 8; the Docker setup now exists.
+"CCA – Customer Contact API": a prototype REST API built with Symfony 7.4, API Platform 5.0 (`api-platform/core ^5.0`), Doctrine ORM 3, MySQL 8 and PHPUnit 12. There is no frontend and no login; authentication is token-only. The branch `upgrade/docker-symfony-8` is meant for a Docker setup and an upgrade to Symfony 8; the Docker setup now exists.
 
 ## Goals and conventions
 
@@ -36,7 +36,7 @@ docker compose exec web php bin/phpunit --filter testCreateCitySuccess  # one te
 docker compose exec web vendor/bin/phpstan analyse --memory-limit=1G  # level 6, config phpstan.dist.neon (128M is too little)
 ```
 
-`phpunit.xml.dist` sets `SYMFONY_DEPRECATIONS_HELPER=max[self]=0&max[direct]=0`: a deprecation triggered by our code (`self`) or by our call of a deprecated vendor API (`direct`) fails the run; `indirect` ones from `vendor/` are only listed. A value set in the shell wins over the `<env>` entry. No PHP-CS-Fixer is installed. CI: `.github/workflows/ci.yml` (PHPStan, migrations, PHPUnit).
+`phpunit.xml.dist` sets `failOnDeprecation="true"` and `<source ignoreIndirectDeprecations="true">` (with `src` and `tests` as first-party code): a deprecation triggered by our code (self) or by our call of a deprecated vendor API (direct) fails the run; indirect ones from `vendor/` are ignored. The Symfony PHPUnit bridge's `SYMFONY_DEPRECATIONS_HELPER` has no effect on PHPUnit 10+, so it is not used any more. No PHP-CS-Fixer is installed. CI: `.github/workflows/ci.yml` (PHPStan, migrations, PHPUnit).
 
 ## Architecture
 
