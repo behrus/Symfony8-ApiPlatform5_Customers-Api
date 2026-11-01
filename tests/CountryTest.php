@@ -14,6 +14,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class CountryTest extends ApiTestCase
 {
+    protected static ?bool $alwaysBootKernel = true;
+
     private HttpClientInterface $client;
     private EntityManagerInterface $entityManager;
 
@@ -46,7 +48,7 @@ class CountryTest extends ApiTestCase
 
         $this->assertResponseHeaderSame(
             'content-type',
-            'application/ld+json; charset=utf-8'
+            'application/ld+json'
         );
 
         $this->assertJsonContains([
@@ -82,7 +84,7 @@ class CountryTest extends ApiTestCase
 
         $this->assertResponseHeaderSame(
             'content-type',
-            'application/ld+json; charset=utf-8'
+            'application/ld+json'
         );
 
         $this->assertJsonContains([

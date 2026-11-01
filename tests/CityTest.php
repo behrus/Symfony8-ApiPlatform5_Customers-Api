@@ -14,6 +14,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class CityTest extends ApiTestCase
 {
+    protected static ?bool $alwaysBootKernel = true;
+
     private HttpClientInterface $client;
     private EntityManagerInterface $entityManager;
 
@@ -47,7 +49,7 @@ class CityTest extends ApiTestCase
 
         $this->assertResponseHeaderSame(
             'content-type',
-            'application/ld+json; charset=utf-8'
+            'application/ld+json'
         );
 
         $this->assertJsonContains([
@@ -85,7 +87,7 @@ class CityTest extends ApiTestCase
 
         $this->assertResponseHeaderSame(
             'content-type',
-            'application/ld+json; charset=utf-8'
+            'application/ld+json'
         );
 
         $this->assertJsonContains([

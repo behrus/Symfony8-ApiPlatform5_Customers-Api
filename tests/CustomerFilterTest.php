@@ -18,6 +18,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class CustomerFilterTest extends ApiTestCase
 {
+    protected static ?bool $alwaysBootKernel = true;
+
     private HttpClientInterface $client;
     private EntityManagerInterface $entityManager;
 

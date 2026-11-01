@@ -16,5 +16,6 @@ api_platform:
         extra_properties:
             standard_put: false
             rfc_7807_compliant_errors: true
-    event_listeners_backward_compatibility_layer: false
-    keep_legacy_inflector: false
+    serializer:
+        # API Platform 4 turns the "hydra:" prefix off by default; keep it for existing clients.
+        hydra_prefix: true
