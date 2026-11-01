@@ -9,7 +9,8 @@ ARG UID=1000
 ARG GID=1000
 
 # libcap provides setcap: the non-root user may bind port 80/443 inside the container.
-RUN apk add --no-cache libcap \
+# git is needed by "composer recipes:update" (Symfony Flex applies recipe changes as a git patch).
+RUN apk add --no-cache libcap git \
     && addgroup -g ${GID} app \
     && adduser -D -u ${UID} -G app app \
     && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp \
