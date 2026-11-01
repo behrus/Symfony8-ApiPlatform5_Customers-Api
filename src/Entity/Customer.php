@@ -2,9 +2,9 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
-use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
-use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\ExactFilter;
+use ApiPlatform\Doctrine\Orm\Filter\PartialSearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SortFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
@@ -12,6 +12,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\QueryParameter;
 use App\Repository\CustomerRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -35,19 +36,13 @@ use Symfony\Component\Serializer\Annotation\Groups;
     normalizationContext: ['groups' => ['customer:read']],
     denormalizationContext: ['groups' => ['customer:write', 'address:write']],
     security: 'is_granted("ROLE_USER")',
-    ),
-    ApiFilter(
-        SearchFilter::class,
-        properties: [
-            'name' => SearchFilter::STRATEGY_IPARTIAL,
-            'email' => SearchFilter::STRATEGY_IPARTIAL,
-            'address.city.name' => SearchFilter::STRATEGY_IEXACT
-        ]
-    ),
-    ApiFilter(
-        OrderFilter::class,
-        properties: ['name']
-    )]
+    parameters: [
+        'name' => new QueryParameter(filter: new PartialSearchFilter()),
+        'email' => new QueryParameter(filter: new PartialSearchFilter()),
+        'address.city.name' => new QueryParameter(filter: new ExactFilter(), property: 'address.city.name'),
+        'order[:property]' => new QueryParameter(filter: new SortFilter(), properties: ['name']),
+    ],
+)]
 #[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
 class Customer
 {
