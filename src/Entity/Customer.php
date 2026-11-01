@@ -25,9 +25,9 @@ use Symfony\Component\Serializer\Annotation\Groups;
     ApiFilter(
         SearchFilter::class,
         properties: [
-            'name' => SearchFilter::STRATEGY_PARTIAL,
-            'email' => SearchFilter::STRATEGY_PARTIAL,
-            'address.city.name' => SearchFilter::STRATEGY_EXACT
+            'name' => SearchFilter::STRATEGY_IPARTIAL,
+            'email' => SearchFilter::STRATEGY_IPARTIAL,
+            'address.city.name' => SearchFilter::STRATEGY_IEXACT
         ]
     ),
     ApiFilter(
