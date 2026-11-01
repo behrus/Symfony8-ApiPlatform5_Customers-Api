@@ -154,14 +154,15 @@
         ]
     },
     "symfony/framework-bundle": {
-        "version": "7.0",
+        "version": "7.4",
         "recipe": {
             "repo": "github.com/symfony/recipes",
             "branch": "main",
-            "version": "7.0",
-            "ref": "6356c19b9ae08e7763e4ba2d9ae63043efc75db5"
+            "version": "7.4",
+            "ref": "5ea2ed9cd29ca8fc2cb9bca9cb7b7e0a8d2be1dc"
         },
         "files": [
+            ".editorconfig",
             "config/packages/cache.yaml",
             "config/packages/framework.yaml",
             "config/preload.php",
