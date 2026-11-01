@@ -2,7 +2,7 @@
 
 namespace App\Tests;
 
-use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
+use ApiPlatform\Test\ApiTestCase;
 use App\DataFixtures\CityFixtures;
 use App\DataFixtures\CountryFixtures;
 use App\DataFixtures\UserFixtures;
@@ -202,12 +202,11 @@ class CityTest extends ApiTestCase
                 'country' => '/api/countries/1'
             ]
         ]);
-        $this->assertResponseStatusCodeSame(400);
+        $this->assertResponseStatusCodeSame(422);
         $this->assertJsonContains([
-            '@id'               => '/api/errors/400',
-            '@type'             => 'hydra:Error',
-            'hydra:title'       => 'An error occurred',
-            'hydra:description' => 'The type of the "name" attribute must be "string", "integer" given.',
+            '@type'  => 'ConstraintViolation',
+            'status' => 422,
+            'detail' => 'name: This value should be of type string.',
         ]);
     }
 }

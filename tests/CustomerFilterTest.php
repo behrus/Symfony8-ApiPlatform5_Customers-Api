@@ -2,7 +2,7 @@
 
 namespace App\Tests;
 
-use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
+use ApiPlatform\Test\ApiTestCase;
 use App\DataFixtures\CityFixtures;
 use App\DataFixtures\CountryFixtures;
 use App\DataFixtures\CustomerFixtures;

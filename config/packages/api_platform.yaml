@@ -15,7 +15,6 @@ api_platform:
             vary: ['Content-Type', 'Authorization', 'Origin']
         extra_properties:
             standard_put: false
-            rfc_7807_compliant_errors: true
     serializer:
         # API Platform 4 turns the "hydra:" prefix off by default; keep it for existing clients.
         hydra_prefix: true
