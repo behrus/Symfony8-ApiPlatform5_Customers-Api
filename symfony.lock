@@ -32,12 +32,12 @@
         }
     },
     "doctrine/doctrine-bundle": {
-        "version": "2.12",
+        "version": "3.3",
         "recipe": {
             "repo": "github.com/symfony/recipes",
             "branch": "main",
-            "version": "2.12",
-            "ref": "4740f08822ce2f32d929b93931131064363cb40a"
+            "version": "3.0",
+            "ref": "7d10295408f32426bffd6e99c75c2cb0a7b823f2"
         },
         "files": [
             "config/packages/doctrine.yaml",
