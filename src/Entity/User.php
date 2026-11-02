@@ -15,30 +15,39 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
-#[ApiResource(security: "is_granted('ROLE_ADMIN')")]
+#[ApiResource(
+    normalizationContext: ['groups' => ['user:read']],
+    denormalizationContext: ['groups' => ['user:write']],
+    security: "is_granted('ROLE_ADMIN')",
+)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['user:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
     #[Assert\NotBlank]
+    #[Groups(['user:read', 'user:write'])]
     private string $email;
 
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
+    #[Groups(['user:read', 'user:write'])]
     private array $roles = [];
 
     /**
+     * Unused: authentication is token-only. The default is not a valid hash,
+     * so no password can ever match it. Not writable through the API.
+     *
      * @var string The hashed password
      */
     #[ORM\Column]
-    #[Assert\NotBlank]
-    private string $password;
+    private string $password = '!';
 
     /** @var Collection<int, ApiToken> */
     #[ORM\OneToMany(
