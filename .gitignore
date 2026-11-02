@@ -30,3 +30,8 @@
 /CLAUDE.local.md
 /.claude/settings.local.json
 ###< claude-code ###
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###
