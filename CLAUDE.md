@@ -36,7 +36,7 @@ docker compose exec web php bin/phpunit --filter testCreateCitySuccess  # one te
 docker compose exec web vendor/bin/phpstan analyse --memory-limit=1G  # level 6, config phpstan.dist.neon (128M is too little)
 ```
 
-`phpunit.xml.dist` sets `failOnDeprecation="true"` and `<source ignoreIndirectDeprecations="true">` (with `src` and `tests` as first-party code): a deprecation triggered by our code (self) or by our call of a deprecated vendor API (direct) fails the run; indirect ones from `vendor/` are ignored. The Symfony PHPUnit bridge's `SYMFONY_DEPRECATIONS_HELPER` has no effect on PHPUnit 10+, so it is not used any more. No PHP-CS-Fixer is installed. CI: `.github/workflows/ci.yml` (PHPStan, migrations, PHPUnit).
+`phpunit.xml.dist` sets `failOnDeprecation="true"` and `<source ignoreIndirectDeprecations="true">` (with `src` and `tests` as first-party code): a deprecation triggered by our code (self) or by our call of a deprecated vendor method or property (direct) fails the run; indirect ones from `vendor/` are ignored. `<deprecationTrigger>` (`trigger_deprecation()` and Doctrine's `Deprecation::trigger()`) is required: without it a deprecated vendor call is not reported at all (checked with a throwaway test). Known gaps (same test): extending a vendor class marked `@final` and loading a deprecated vendor class are classified as indirect and do not fail the run. `symfony/phpunit-bridge` was removed: it made no difference to the result of these checks. No PHP-CS-Fixer is installed. CI: `.github/workflows/ci.yml` (PHPStan, migrations, PHPUnit).
 
 ## Architecture
 
