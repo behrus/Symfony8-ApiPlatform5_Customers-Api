@@ -42,8 +42,4 @@
             <function>trigger_deprecation</function>
         </deprecationTrigger>
     </source>
-
-    <extensions>
-        <bootstrap class="Symfony\Bridge\PhpUnit\SymfonyExtension" />
-    </extensions>
 </phpunit>
