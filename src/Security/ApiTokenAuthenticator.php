@@ -34,7 +34,6 @@ class ApiTokenAuthenticator extends AbstractAuthenticator
         $apiToken = $request->headers->get('x-api-key');
 
         if (null === $apiToken) {
-
             throw new CustomUserMessageAuthenticationException('No API token provided');
         }
 
@@ -43,7 +42,6 @@ class ApiTokenAuthenticator extends AbstractAuthenticator
                 $user = $this->userRepository->findByApiToken($apiToken);
 
                 if (!$user) {
-
                     throw new UserNotFoundException();
                 }
 
@@ -60,7 +58,7 @@ class ApiTokenAuthenticator extends AbstractAuthenticator
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
         $data = [
-            'message' => strtr($exception->getMessageKey(), $exception->getMessageData())
+            'message' => strtr($exception->getMessageKey(), $exception->getMessageData()),
         ];
 
         return new JsonResponse($data, Response::HTTP_UNAUTHORIZED);

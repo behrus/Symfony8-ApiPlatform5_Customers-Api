@@ -12,9 +12,8 @@ use ApiPlatform\Metadata\Put;
 use App\Repository\AddressRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Attribute\Groups;
-use Symfony\Component\Serializer\Attribute\SerializedName;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AddressRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -30,7 +29,7 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
         new Post(),
         new Put(),
         new Patch(),
-        new Delete()
+        new Delete(),
     ],
     normalizationContext: [
         'groups' => ['address:read', 'customer:read'],
@@ -143,6 +142,7 @@ class Address
     public function setUpdatedAt(): self
     {
         $this->updatedAt = new \DateTimeImmutable();
+
         return $this;
     }
 

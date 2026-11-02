@@ -20,7 +20,7 @@ class LogRequestAndResponseEventListener
         $response = $event->getResponse();
 
         $this->logger->info('data', [
-            'route' => $request->getMethod() . ' ' . $request->getRequestUri(),
+            'route' => $request->getMethod().' '.$request->getRequestUri(),
             'status' => $response->getStatusCode(),
             'request body' => $request->request->all(),
             'response' => json_decode($response->getContent(), true),

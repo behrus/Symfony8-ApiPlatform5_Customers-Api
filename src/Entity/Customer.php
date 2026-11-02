@@ -19,8 +19,8 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
-use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -81,8 +81,7 @@ class Customer
         mappedBy: 'customer',
         cascade: ['persist'],
         orphanRemoval: true
-    )
-    ]
+    )]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['customer:read', 'customer:write', 'address:write'])]
     #[Assert\Valid]
@@ -157,6 +156,7 @@ class Customer
     public function setUpdatedAt(): self
     {
         $this->updatedAt = new \DateTimeImmutable();
+
         return $this;
     }
 

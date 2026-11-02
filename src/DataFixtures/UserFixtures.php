@@ -3,12 +3,10 @@
 namespace App\DataFixtures;
 
 use App\Entity\ApiToken;
-use App\Entity\Country;
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
-use Psr\Log\LoggerInterface;
 
 class UserFixtures extends Fixture implements OrderedFixtureInterface
 {

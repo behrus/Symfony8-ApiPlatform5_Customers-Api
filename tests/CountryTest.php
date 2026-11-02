@@ -5,7 +5,6 @@ namespace App\Tests;
 use ApiPlatform\Test\ApiTestCase;
 use App\DataFixtures\CountryFixtures;
 use App\DataFixtures\UserFixtures;
-use App\Entity\ApiToken;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
@@ -32,7 +31,7 @@ class CountryTest extends ApiTestCase
     {
         $this->databaseTool->loadFixtures([
             CountryFixtures::class,
-            UserFixtures::class
+            UserFixtures::class,
         ]);
 
         $apiToken = $this->getUserApiToken();
@@ -40,7 +39,7 @@ class CountryTest extends ApiTestCase
             'headers' => [
                 'x-api-key' => $apiToken,
                 'Accept' => 'application/ld+json',
-                'Content-Type' => 'application/ld+json'
+                'Content-Type' => 'application/ld+json',
             ],
         ]);
 
@@ -52,10 +51,10 @@ class CountryTest extends ApiTestCase
         );
 
         $this->assertJsonContains([
-            '@context'         => '/api/contexts/Country',
-            '@id'              => '/api/countries',
-            '@type'            => 'hydra:Collection',
-            'hydra:totalItems' => 2
+            '@context' => '/api/contexts/Country',
+            '@id' => '/api/countries',
+            '@type' => 'hydra:Collection',
+            'hydra:totalItems' => 2,
         ]);
 
         $this->assertCount(2, $response->toArray()['hydra:member']);
@@ -65,7 +64,7 @@ class CountryTest extends ApiTestCase
     {
         $this->databaseTool->loadFixtures([
             CountryFixtures::class,
-            UserFixtures::class
+            UserFixtures::class,
         ]);
         $apiToken = $this->getUserApiToken();
 
@@ -73,11 +72,11 @@ class CountryTest extends ApiTestCase
             'headers' => [
                 'x-api-key' => $apiToken,
                 'Accept' => 'application/ld+json',
-                'Content-Type' => 'application/ld+json'
+                'Content-Type' => 'application/ld+json',
             ],
-            'json'    => [
-                'name'         => 'Austria'
-            ]
+            'json' => [
+                'name' => 'Austria',
+            ],
         ]);
 
         $this->assertResponseStatusCodeSame(201);
@@ -88,7 +87,7 @@ class CountryTest extends ApiTestCase
         );
 
         $this->assertJsonContains([
-            'name'        => 'Austria',
+            'name' => 'Austria',
         ]);
     }
 
@@ -96,22 +95,22 @@ class CountryTest extends ApiTestCase
     {
         $this->databaseTool->loadFixtures([
             CountryFixtures::class,
-            UserFixtures::class
+            UserFixtures::class,
         ]);
         $apiToken = $this->getUserApiToken();
         $response = $this->client->request('GET', '/api/countries/2', [
             'headers' => [
                 'x-api-key' => $apiToken,
                 'Accept' => 'application/ld+json',
-                'Content-Type' => 'application/ld+json'
+                'Content-Type' => 'application/ld+json',
             ],
         ]);
 
-        //dd($response);
+        // dd($response);
         $this->assertResponseIsSuccessful();
         $this->assertJsonContains([
             '@context' => '/api/contexts/Country',
-            '@id'         => '/api/countries/2',
+            '@id' => '/api/countries/2',
             'name' => 'France',
         ]);
     }
@@ -120,6 +119,7 @@ class CountryTest extends ApiTestCase
     {
         $userRepository = $this->entityManager->getRepository(User::class);
         $user = $userRepository->findOneBy(['email' => 'test@example.com']);
+
         return $user->getApiTokens()->first()->getToken();
     }
 
@@ -127,23 +127,23 @@ class CountryTest extends ApiTestCase
     {
         $this->databaseTool->loadFixtures([
             CountryFixtures::class,
-            UserFixtures::class
+            UserFixtures::class,
         ]);
         $apiToken = $this->getUserApiToken();
         $this->client->request('PUT', '/api/countries/1', [
             'headers' => [
                 'x-api-key' => $apiToken,
                 'Accept' => 'application/ld+json',
-                'Content-Type' => 'application/ld+json'
+                'Content-Type' => 'application/ld+json',
             ],
-            'json'    => [
-                'name'         => 'Italy'
-            ]
+            'json' => [
+                'name' => 'Italy',
+            ],
         ]);
 
         $this->assertResponseIsSuccessful();
         $this->assertJsonContains([
-            '@id'         => '/api/countries/1',
+            '@id' => '/api/countries/1',
             'name' => 'Italy',
         ]);
     }
@@ -152,7 +152,7 @@ class CountryTest extends ApiTestCase
     {
         $this->databaseTool->loadFixtures([
             CountryFixtures::class,
-            UserFixtures::class
+            UserFixtures::class,
         ]);
         $apiToken = $this->getUserApiToken();
 
@@ -160,11 +160,11 @@ class CountryTest extends ApiTestCase
             'headers' => [
                 'x-api-key' => $apiToken,
                 'Accept' => 'application/ld+json',
-                'Content-Type' => 'application/ld+json'
+                'Content-Type' => 'application/ld+json',
             ],
         ]);
 
-        //dd($response);
+        // dd($response);
         $this->assertResponseIsSuccessful();
     }
 
@@ -172,23 +172,23 @@ class CountryTest extends ApiTestCase
     {
         $this->databaseTool->loadFixtures([
             CountryFixtures::class,
-            UserFixtures::class
+            UserFixtures::class,
         ]);
         $apiToken = $this->getUserApiToken();
 
         $response = $this->client->request('POST', '/api/countries', [
-             'headers' => [
-                 'x-api-key' => $apiToken,
-                 'Accept' => 'application/ld+json',
-                 'Content-Type' => 'application/ld+json'
-             ],
-             'json' => [
-                 'name' => 12345,
-             ]
-         ]);
+            'headers' => [
+                'x-api-key' => $apiToken,
+                'Accept' => 'application/ld+json',
+                'Content-Type' => 'application/ld+json',
+            ],
+            'json' => [
+                'name' => 12345,
+            ],
+        ]);
         $this->assertResponseStatusCodeSame(422);
         $this->assertJsonContains([
-            '@type'  => 'ConstraintViolation',
+            '@type' => 'ConstraintViolation',
             'status' => 422,
             'detail' => 'name: This value should be of type string.',
         ]);

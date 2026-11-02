@@ -57,7 +57,6 @@ class City
     #[Groups(['address:read', 'city:write', 'city:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
-
     #[ORM\ManyToOne(inversedBy: 'city')]
     #[Groups(['address:read', 'city:read', 'city:write'])]
     private Country $country;
@@ -68,8 +67,7 @@ class City
         mappedBy: 'city',
         cascade: ['remove'],
         orphanRemoval: true,
-    )
-    ]
+    )]
     private Collection $address;
 
     public function __construct()
@@ -126,6 +124,7 @@ class City
     public function setUpdatedAt(): self
     {
         $this->updatedAt = new \DateTimeImmutable();
+
         return $this;
     }
 

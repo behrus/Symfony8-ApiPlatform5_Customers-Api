@@ -110,6 +110,7 @@ class Country
     public function setUpdatedAt(): self
     {
         $this->updatedAt = new \DateTimeImmutable();
+
         return $this;
     }
 
