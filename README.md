@@ -1,12 +1,14 @@
+# CCA – Customer Contact API
 
-# CCA - Customer Contact Api
+A prototype REST API for managing customer contacts, built with Symfony 8.1, API Platform 5, Doctrine ORM 3 and MySQL 8, tested with PHPUnit 12. Token authentication, voters, soft delete and an asynchronous Messenger flow with RabbitMQ are part of it.
 
-A prototype for managing customer contacts implemented with Symfony7.0, PlatformApi3 and PHP8.3 with PHPUnit testing.
+**History:** The project started in April 2024 as a Symfony 7.0 / API Platform 3 / PHP 8.3 implementation. In 2026 it was upgraded step by step to the current stack, together with Claude Code (Sonnet). The upgrade added Docker, a CI pipeline, voters and an asynchronous Messenger flow with RabbitMQ.
 
+**Why it exists:** It is a practice project for upgrading a real API without losing test coverage, and for working with an AI assistant in small, reviewable steps (see `docs/ai-workflow.md`).
 
-# Docker
+## Quick start (Docker)
 
-PHP 8.4 with FrankenPHP and MySQL 8.0.36. Project name `cca`.
+PHP 8.4 with FrankenPHP, MySQL 8.0.36 and RabbitMQ 4. Project name `cca`.
 
 ```bash
 docker compose up -d --build
@@ -14,104 +16,109 @@ docker compose exec web composer install
 docker compose exec web php bin/console doctrine:migrations:migrate -n
 docker compose exec web php bin/console --env=test doctrine:database:create
 docker compose exec web php bin/console --env=test doctrine:migrations:migrate -n
-docker compose exec web php bin/phpunit
 ```
 
-- API docs: http://localhost:8080/api (HTTPS on 8443). MySQL from the host: `127.0.0.1:3307` (user/password/database `cca`).
+| Service | Address |
+| --- | --- |
+| API and API docs | http://localhost:8080/api (HTTPS on 8443) |
+| RabbitMQ management UI | http://localhost:15672 (user and password `guest`) |
+| MySQL from the host | `127.0.0.1:3307` (user, password and database `cca`) |
+
+The `worker` service runs `php bin/console messenger:consume async` and handles the messages (see [Messenger](#messenger)).
+
+### First request
+
+There is no login (see [Known limitations](#known-limitations)). The first admin user is created in the database, then a token is created for it with a console command:
+
+```bash
+docker compose exec web php bin/console dbal:run-sql "INSERT INTO user (email, roles, password) VALUES ('admin@example.com', '[\"ROLE_ADMIN\"]', '!')"
+docker compose exec web php bin/console app:api-token:create admin@example.com
+curl -H "x-api-key: <token>" -H "Accept: application/ld+json" http://localhost:8080/api/customers
+```
+
+The password column is not used (authentication is token-only); `!` is not a valid hash, so no password can match it. The token is stored in the `api_token` table and printed once.
+
+### Docker notes
+
 - The container runs as user ID 1000, so `vendor/` and `var/` belong to the host user. For another host user ID: `UID=$(id -u) GID=$(id -g) docker compose up -d --build`.
 - `.env` and `.env.test` are committed with safe defaults only. Put secrets and local overrides in `.env.local`.
 - The MySQL init script (`docker/mysql/init.sql`) runs only on the first start. For an existing volume use `docker compose down -v`.
 
-# Installation/Configuration
+## Authentication and authorisation
 
-Please just run 'composer install' in the terminal. (Composer Version2)
-In addition to Symfony7.0 (no webapp installation), the ApiPlatform3 is installed, with which the API was implemented.
+Every request needs the header `x-api-key: <token>`. The `ApiTokenAuthenticator` (`src/Security`) looks up the user of the token. Without a valid token the API answers `401`.
 
-LAMP, WAMP or MAMP are ideal for local installation. (Nginx can also be used instead of Apache2) Or Docker.
+Headers for a REST client:
 
-PHP version during development was 8.3.
-MySQL as a database in version 8.0.36-0ubuntu0.22.04.1.
-PHPUnit v9.6 for testing as a Symfony pack installation. 
-PHP Version bei der Entwicklung war 8.3.  
+| Header | Value |
+| --- | --- |
+| `x-api-key` | the token |
+| `Accept` | `application/ld+json` |
+| `Content-Type` | `application/ld+json` (for `PATCH`: `application/merge-patch+json`) |
 
-After installing Composer, no additional settings should be required other than creating the .env files for the local environment and test environment.
+| Resource | Path | Operations | Role |
+| --- | --- | --- | --- |
+| Customer | `/api/customers` | list, get, post, put, patch, delete | `ROLE_USER`; `DELETE` only `ROLE_ADMIN` (voter `CUSTOMER_DELETE`) |
+| Address | `/api/addresses` | list, get, post, put, patch, delete | `ROLE_USER` |
+| City | `/api/cities` | list, get, post, put, patch, delete | `ROLE_USER` |
+| Country | `/api/countries` | list, get, post, put, patch, delete | `ROLE_USER` |
+| User | `/api/users` | list, get, post, patch, delete | `ROLE_ADMIN` |
+| ApiToken | `/api/api_tokens` | list, get, post, patch, delete | `ROLE_ADMIN` |
 
+Every user also has `ROLE_USER`. The voter (`src/Security/Voter/CustomerVoter.php`) keeps the delete rule in one place instead of in the entity.
 
-## Calling the project or the endpoints
-If Symfony CLI is installed, it is recommended to start the server with “symfony servo -d”.
+## Behaviour of the endpoints
 
-Without setting up a virtual host, the project is then available in the browser at “http://127.0.0.1:8000/?api”.
-Here you have an overview of the endpoints and information about them.
+- **Customers** can be filtered and ordered: `?name=`, `?email=` (partial, case-insensitive), `?address.city.name=` (exact) and `?order[name]=asc|desc`.
+- **Deleting a customer is a soft delete.** `DELETE` sets `deletedAt`; the row and its addresses stay for traceability. Deleted customers are not listed and answer `404`. The email of a deleted customer stays taken.
+- **Deleting a country or city that still has children is refused** with `409 Conflict`; nothing is removed.
+- Invalid input answers `422` (validation) with a Hydra error body.
+- The unique `email` of a customer is checked by the validator and by a database index.
 
-The endpoints can be executed via the website. However, authentication on the startpage in browser is not available.
+## Messenger
 
-**The API client “Postman” was used for development and interaction with the endpoints. The set up authentication was also tested with Postman.**
+`POST /api/customers` saves the customer and then sends a `CustomerCreated` message to RabbitMQ. The `worker` service takes it from the queue and calls `CustomerCreatedHandler`, which writes a log line. The request does not wait for that; the handler is a small example for the flow.
 
+```mermaid
+flowchart TB
+    subgraph web["web container (request)"]
+        direction TB
+        A["Client<br/>POST /api/customers"] --> B["Auth and roles<br/>x-api-key"]
+        B --> C["Deserialise and validate"]
+        C --> D["CustomerCreatedProcessor<br/>persist and flush"]
+        D --> E["dispatch<br/>CustomerCreated(id)"]
+        E --> F["Response 201"]
+    end
+    subgraph worker["worker container (separate)"]
+        direction TB
+        Q["RabbitMQ queue"] --> W["messenger:consume async"]
+        W --> H["CustomerCreatedHandler<br/>logs, then ack"]
+    end
+    E -- "async" --> Q
+```
 
-## CRUD on the endpoints
+- The message is routed with `#[AsMessage('async')]` on the class; the transport `async` is defined in `config/packages/messenger.yaml` and uses `MESSENGER_TRANSPORT_DSN`.
+- `src/State/CustomerCreatedProcessor.php` wraps API Platform's persist processor and dispatches the message only after the customer is saved.
+- In the `test` environment the transport is `in-memory://`, so tests and CI need no RabbitMQ (the `amqp` PHP extension is still required by `symfony/amqp-messenger`).
 
-The specifications for the prototype led to the creation of the endpoints below with the following functionalities:
+## Tests and quality
 
-- /api/customers       => Customer Entity - CRUD - Role User - *Search- and  
-  order Filters für Datensätze* der Customers
-- /api/addresses       => Address Entity   -  CRUD - Role User
-- /api/city            => City Entity          -  CRUD - Role User
-- /api/country         => Country Entity    -  CRUD - Role User
-- /api/api_tokens      => ApiToken Entity  -  CRUD authorized
-  only for the role admin
-- /api/users           => User Entity          -  CRUD though
-  authorized for the role admin
-  
-All entities are connected to other entities.
-For example, deleting a country results in an OrphanRemoval action against the city and further deletion of the addresses.
+```bash
+docker compose exec web php bin/phpunit                                  # all tests
+docker compose exec web php bin/phpunit tests/CityTest.php               # one file
+docker compose exec web vendor/bin/phpstan analyse --memory-limit=1G     # level 6
+docker compose exec web vendor/bin/php-cs-fixer fix --dry-run --diff     # @Symfony code style
+docker compose exec web php bin/console doctrine:schema:validate         # entities and migrations match
+```
 
+- The functional tests use a real MySQL test database (`cca_test`) and load Liip fixtures. The tests run against the **migrated** schema, so run `--env=test doctrine:migrations:migrate -n` after every new migration.
+- A deprecation triggered by this project fails the test run.
+- The GitHub Actions workflow (`.github/workflows/ci.yml`) runs PHP CS Fixer, PHPStan, the migrations, `schema:validate` and PHPUnit.
 
-## Auth
+## Known limitations
 
-Auth ultimately became its own development.
-The focus was on Auth, which is why login functionality is currently not available.
-
-The workflow for Auth is as follows:
-
-- Create user in the user table with mandatory fields: email,
-  password and the role ['ROLE_USER']
-- Then create a token for this user in the terminal:
-  `php bin/console app:api-token:create <email>`.
-  The token is stored in the apitoken table and printed once.
-
-*There is a specially developed "ApiTokenAuthenticator" class in the "src/Security" folder that determines/controls the workflow.*
-
-## Authorisierung - Access Control
-
-All endpoints can only be reached by users with the role “ROLE_USER”.
-
-Additionally: The user and api_tokens endpoints can only be reached by users with the “ROLE_ADMIN”.
-These settings are of course very general and had to be further refined by assigning rights for the endpoint methods and with “voters” (ownership) in Symfony.
-
-## HTTP header settings for interacting with the endpoints
-
-When using a Rest client (Postman), the following settings must be made for the Http header:
-- Accept          => application/ld+json
-- api                 => <API_TOKE>  (See Authentication and generation of ApiToken section)
-- Content-Type => application/ld+json
-
-**If PATCH is used as a method, the value for the “Content-Type” key must be swapped with “application/merge-patch+json”..
-
-# Logging - Monolog
-All requests and responses with monologue are logged in the system.
-For this purpose, an EventListener “src/EventListener/LogRequestAndResponseEventListener” was developed, which responds to requests and responses and writes the data to the log file in the “var/log/request” folder.
-
-# PHPUnit Tests
-
-To illustrate this, ApiTests were created for the Cities and Countries endpoints.
-Please enter DATABASE_URL in .env.test.
-
-There are city and country data fixtures for the entity that are used in the tests.
-
-
------Test Umgebung ---------
-
-- symfony console --env=test doctrin:migrations:migrate //Migration
-  ausführen
-- php bin/phpunit tests //Tests ausführen
-
+- **No login and no registration.** An admin creates users, and tokens are created on the server with `app:api-token:create`.
+- **Tokens are stored in plain text** in `api_token`. Storing hashes would change the authenticator and the fixtures.
+- **No anonymisation yet.** The email of a soft-deleted customer cannot be used again, and `/api/addresses` still shows the addresses of a deleted customer.
+- **Messenger has no failure transport.** A message that keeps failing is dropped after the retries.
+- **Request logging (dev only).** `LogRequestAndResponseEventListener` writes all request headers (including `x-api-key`) and the full response body to `var/log/request/` (kept for 90 days). Do not use it with real data.
