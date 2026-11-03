@@ -75,10 +75,9 @@ The workflow for Auth is as follows:
 
 - Create user in the user table with mandatory fields: email,
   password and the role ['ROLE_USER']
-- Then call the generate-token.php file in the project directory in the terminal
-  apitoken is generated and output in the terminal. You can build this as a Symfony command.
-- Enter the created token of user into the field
-  stored in the apitoken table in the database
+- Then create a token for this user in the terminal:
+  `php bin/console app:api-token:create <email>`.
+  The token is stored in the apitoken table and printed once.
 
 *There is a specially developed "ApiTokenAuthenticator" class in the "src/Security" folder that determines/controls the workflow.*
 
