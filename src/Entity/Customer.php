@@ -31,7 +31,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Post(),
         new Put(),
         new Patch(),
-        new Delete(),
+        new Delete(security: 'is_granted("CUSTOMER_DELETE", object)'),
     ],
     normalizationContext: ['groups' => ['customer:read']],
     denormalizationContext: ['groups' => ['customer:write', 'address:write']],
