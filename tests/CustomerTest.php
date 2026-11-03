@@ -10,6 +10,7 @@ use App\DataFixtures\UserFixtures;
 use App\Entity\Customer;
 use App\Entity\User;
 use App\Message\CustomerCreated;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
 use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
@@ -79,6 +80,60 @@ class CustomerTest extends ApiTestCase
         $message = $sent[0]->getMessage();
         $this->assertInstanceOf(CustomerCreated::class, $message);
         $this->assertSame((int) basename($response->toArray()['@id']), $message->customerId);
+    }
+
+    public function testCreateReturnsTimestamps(): void
+    {
+        $response = $this->client->request('POST', '/api/customers', [
+            'headers' => $this->headers('test@example.com') + ['Content-Type' => 'application/ld+json'],
+            'json' => [
+                'name' => 'Timestamp Customer',
+                'email' => 'timestamps@example.com',
+                'phone' => '123456',
+            ],
+        ]);
+
+        $this->assertResponseStatusCodeSame(201);
+        $data = $response->toArray();
+        $this->assertArrayHasKey('createdAt', $data);
+        $this->assertArrayHasKey('updatedAt', $data);
+    }
+
+    public function testCreateWithDuplicateEmailIsRejected(): void
+    {
+        $this->client->request('POST', '/api/customers', [
+            'headers' => $this->headers('test@example.com') + ['Content-Type' => 'application/ld+json'],
+            'json' => [
+                'name' => 'Duplicate Customer',
+                'email' => 'duplicate@example.com',
+                'phone' => '123456',
+            ],
+        ]);
+        $this->assertResponseStatusCodeSame(201);
+
+        $this->client->request('POST', '/api/customers', [
+            'headers' => $this->headers('test@example.com') + ['Content-Type' => 'application/ld+json'],
+            'json' => [
+                'name' => 'Duplicate Customer Two',
+                'email' => 'duplicate@example.com',
+                'phone' => '654321',
+            ],
+        ]);
+        $this->assertResponseStatusCodeSame(422);
+    }
+
+    public function testDatabaseRejectsDuplicateEmail(): void
+    {
+        foreach (['First', 'Second'] as $name) {
+            $customer = new Customer();
+            $customer->setName($name);
+            $customer->setEmail('unique-index@example.com');
+            $customer->setPhone('123456');
+            $this->entityManager->persist($customer);
+        }
+
+        $this->expectException(UniqueConstraintViolationException::class);
+        $this->entityManager->flush();
     }
 
     private function firstCustomerId(): int

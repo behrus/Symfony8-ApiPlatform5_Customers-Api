@@ -65,6 +65,20 @@ class UserTest extends ApiTestCase
         $this->assertArrayNotHasKey('password', $response->toArray());
     }
 
+    public function testCreateUserSetsTimestamps(): void
+    {
+        $this->client->request('POST', '/api/users', [
+            'headers' => $this->headers('admin@example.com'),
+            'json' => ['email' => 'stamped@example.com'],
+        ]);
+        $this->assertResponseStatusCodeSame(201);
+
+        $this->entityManager->clear();
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => 'stamped@example.com']);
+        $this->assertNotNull($user->getCreatedAt());
+        $this->assertNotNull($user->getUpdatedAt());
+    }
+
     /**
      * @return array<string, string>
      */
