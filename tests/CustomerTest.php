@@ -7,6 +7,7 @@ use App\DataFixtures\CityFixtures;
 use App\DataFixtures\CountryFixtures;
 use App\DataFixtures\CustomerFixtures;
 use App\DataFixtures\UserFixtures;
+use App\Entity\Address;
 use App\Entity\Customer;
 use App\Entity\User;
 use App\Message\CustomerCreated;
@@ -136,6 +137,74 @@ class CustomerTest extends ApiTestCase
 
         $this->expectException(UniqueConstraintViolationException::class);
         $this->entityManager->flush();
+    }
+
+    public function testDeletedCustomerIsNotListed(): void
+    {
+        $id = $this->firstCustomerId();
+        $total = $this->listCustomers()['hydra:totalItems'];
+
+        $this->deleteAsAdmin($id);
+
+        $list = $this->listCustomers();
+        $this->assertSame($total - 1, $list['hydra:totalItems']);
+        $this->assertNotContains('/api/customers/'.$id, array_column($list['hydra:member'], '@id'));
+    }
+
+    public function testDeletedCustomerAnswersNotFound(): void
+    {
+        $id = $this->firstCustomerId();
+        $this->deleteAsAdmin($id);
+
+        $this->client->request('GET', '/api/customers/'.$id, ['headers' => $this->headers('test@example.com')]);
+        $this->assertResponseStatusCodeSame(404);
+
+        $this->client->request('PATCH', '/api/customers/'.$id, [
+            'headers' => ['Content-Type' => 'application/merge-patch+json'] + $this->headers('test@example.com'),
+            'json' => ['name' => 'Changed after delete'],
+        ]);
+        $this->assertResponseStatusCodeSame(404);
+
+        $this->client->request('DELETE', '/api/customers/'.$id, ['headers' => $this->headers('admin@example.com')]);
+        $this->assertResponseStatusCodeSame(404);
+    }
+
+    public function testDeleteKeepsTheAddresses(): void
+    {
+        $addresses = $this->entityManager->getRepository(Address::class)->count([]);
+
+        $this->deleteAsAdmin($this->firstCustomerId());
+
+        $this->entityManager->clear();
+        $this->assertSame($addresses, $this->entityManager->getRepository(Address::class)->count([]));
+    }
+
+    public function testEmailOfDeletedCustomerStaysTaken(): void
+    {
+        $id = $this->firstCustomerId();
+        $email = $this->entityManager->getRepository(Customer::class)->find($id)->getEmail();
+        $this->deleteAsAdmin($id);
+
+        $this->client->request('POST', '/api/customers', [
+            'headers' => $this->headers('test@example.com') + ['Content-Type' => 'application/ld+json'],
+            'json' => ['name' => 'Same Email', 'email' => $email, 'phone' => '123456'],
+        ]);
+
+        $this->assertResponseStatusCodeSame(422);
+    }
+
+    private function deleteAsAdmin(int $id): void
+    {
+        $this->client->request('DELETE', '/api/customers/'.$id, ['headers' => $this->headers('admin@example.com')]);
+        $this->assertResponseStatusCodeSame(204);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function listCustomers(): array
+    {
+        return $this->client->request('GET', '/api/customers', ['headers' => $this->headers('test@example.com')])->toArray();
     }
 
     private function firstCustomerId(): int
