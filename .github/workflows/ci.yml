@@ -65,5 +65,8 @@ jobs:
       - name: Run migrations
         run: php bin/console doctrine:migrations:migrate --no-interaction
 
+      - name: Validate the schema (entities and migrations must match)
+        run: php bin/console doctrine:schema:validate
+
       - name: Run tests
         run: php bin/phpunit

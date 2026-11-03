@@ -5,7 +5,6 @@ namespace App\Tests;
 use ApiPlatform\Test\ApiTestCase;
 use App\DataFixtures\UserFixtures;
 use App\Entity\User;
-use Doctrine\Common\DataFixtures\Purger\ORMPurger;
 use Doctrine\ORM\EntityManagerInterface;
 use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -21,7 +20,7 @@ class UserTest extends ApiTestCase
     {
         $this->client = $this->createClient();
         $this->entityManager = $this->client->getContainer()->get('doctrine')->getManager();
-        $this->client->getContainer()->get(DatabaseToolCollection::class)->get()->withPurgeMode(ORMPurger::PURGE_MODE_TRUNCATE)->loadFixtures([
+        $this->client->getContainer()->get(DatabaseToolCollection::class)->get()->loadFixtures([
             UserFixtures::class,
         ]);
     }

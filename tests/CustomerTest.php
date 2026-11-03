@@ -11,7 +11,6 @@ use App\Entity\Address;
 use App\Entity\Customer;
 use App\Entity\User;
 use App\Message\CustomerCreated;
-use Doctrine\Common\DataFixtures\Purger\ORMPurger;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
@@ -29,7 +28,7 @@ class CustomerTest extends ApiTestCase
     {
         $this->client = $this->createClient();
         $this->entityManager = $this->client->getContainer()->get('doctrine')->getManager();
-        $this->client->getContainer()->get(DatabaseToolCollection::class)->get()->withPurgeMode(ORMPurger::PURGE_MODE_TRUNCATE)->loadFixtures([
+        $this->client->getContainer()->get(DatabaseToolCollection::class)->get()->loadFixtures([
             UserFixtures::class,
             CountryFixtures::class,
             CityFixtures::class,

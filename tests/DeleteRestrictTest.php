@@ -11,7 +11,7 @@ use App\Entity\Address;
 use App\Entity\City;
 use App\Entity\Country;
 use App\Entity\User;
-use Doctrine\Common\DataFixtures\Purger\ORMPurger;
+use App\Tests\Support\FindsFixtureIds;
 use Doctrine\ORM\EntityManagerInterface;
 use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -21,6 +21,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class DeleteRestrictTest extends ApiTestCase
 {
+    use FindsFixtureIds;
+
     protected static ?bool $alwaysBootKernel = true;
 
     private HttpClientInterface $client;
@@ -30,7 +32,7 @@ class DeleteRestrictTest extends ApiTestCase
     {
         $this->client = $this->createClient();
         $this->entityManager = $this->client->getContainer()->get('doctrine')->getManager();
-        $this->client->getContainer()->get(DatabaseToolCollection::class)->get()->withPurgeMode(ORMPurger::PURGE_MODE_TRUNCATE)->loadFixtures([
+        $this->client->getContainer()->get(DatabaseToolCollection::class)->get()->loadFixtures([
             UserFixtures::class,
             CountryFixtures::class,
             CityFixtures::class,
@@ -41,7 +43,7 @@ class DeleteRestrictTest extends ApiTestCase
     public function testDeleteCityWithAddressesIsRefused(): void
     {
         // Berlin has two addresses (Anna Schmidt, Bernd Schmitt).
-        $this->client->request('DELETE', '/api/cities/1', ['headers' => $this->headers()]);
+        $this->client->request('DELETE', '/api/cities/'.$this->idOf(City::class, 'Berlin'), ['headers' => $this->headers()]);
 
         $this->assertResponseStatusCodeSame(409);
         $this->assertJsonContains(['detail' => 'This resource still has related resources and cannot be deleted.']);
@@ -52,7 +54,7 @@ class DeleteRestrictTest extends ApiTestCase
     public function testDeleteCountryWithCitiesIsRefused(): void
     {
         // Germany has Berlin.
-        $this->client->request('DELETE', '/api/countries/1', ['headers' => $this->headers()]);
+        $this->client->request('DELETE', '/api/countries/'.$this->idOf(Country::class, 'Germany'), ['headers' => $this->headers()]);
 
         $this->assertResponseStatusCodeSame(409);
         $this->assertSame(2, $this->rows(Country::class));

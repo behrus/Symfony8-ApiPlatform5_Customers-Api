@@ -5,8 +5,9 @@ namespace App\Tests;
 use ApiPlatform\Test\ApiTestCase;
 use App\DataFixtures\CountryFixtures;
 use App\DataFixtures\UserFixtures;
+use App\Entity\Country;
 use App\Entity\User;
-use Doctrine\Common\DataFixtures\Purger\ORMPurger;
+use App\Tests\Support\FindsFixtureIds;
 use Doctrine\ORM\EntityManagerInterface;
 use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
 use Liip\TestFixturesBundle\Services\DatabaseTools\AbstractDatabaseTool;
@@ -14,6 +15,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class CountryTest extends ApiTestCase
 {
+    use FindsFixtureIds;
+
     protected static ?bool $alwaysBootKernel = true;
 
     private HttpClientInterface $client;
@@ -25,7 +28,7 @@ class CountryTest extends ApiTestCase
     {
         $this->client = $this->createClient();
         $this->entityManager = $this->client->getContainer()->get('doctrine')->getManager();
-        $this->databaseTool = $this->client->getContainer()->get(DatabaseToolCollection::class)->get()->withPurgeMode(ORMPurger::PURGE_MODE_TRUNCATE);
+        $this->databaseTool = $this->client->getContainer()->get(DatabaseToolCollection::class)->get();
     }
 
     public function testGetCollection(): void
@@ -99,7 +102,7 @@ class CountryTest extends ApiTestCase
             UserFixtures::class,
         ]);
         $apiToken = $this->getUserApiToken();
-        $response = $this->client->request('GET', '/api/countries/2', [
+        $response = $this->client->request('GET', '/api/countries/'.$this->idOf(Country::class, 'France'), [
             'headers' => [
                 'x-api-key' => $apiToken,
                 'Accept' => 'application/ld+json',
@@ -111,7 +114,7 @@ class CountryTest extends ApiTestCase
         $this->assertResponseIsSuccessful();
         $this->assertJsonContains([
             '@context' => '/api/contexts/Country',
-            '@id' => '/api/countries/2',
+            '@id' => '/api/countries/'.$this->idOf(Country::class, 'France'),
             'name' => 'France',
         ]);
     }
@@ -131,7 +134,8 @@ class CountryTest extends ApiTestCase
             UserFixtures::class,
         ]);
         $apiToken = $this->getUserApiToken();
-        $this->client->request('PUT', '/api/countries/1', [
+        $countryId = $this->idOf(Country::class, 'Germany');
+        $this->client->request('PUT', '/api/countries/'.$countryId, [
             'headers' => [
                 'x-api-key' => $apiToken,
                 'Accept' => 'application/ld+json',
@@ -144,7 +148,7 @@ class CountryTest extends ApiTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertJsonContains([
-            '@id' => '/api/countries/1',
+            '@id' => '/api/countries/'.$countryId,
             'name' => 'Italy',
         ]);
     }
@@ -157,7 +161,7 @@ class CountryTest extends ApiTestCase
         ]);
         $apiToken = $this->getUserApiToken();
 
-        $response = $this->client->request('DELETE', '/api/countries/2', [
+        $response = $this->client->request('DELETE', '/api/countries/'.$this->idOf(Country::class, 'France'), [
             'headers' => [
                 'x-api-key' => $apiToken,
                 'Accept' => 'application/ld+json',

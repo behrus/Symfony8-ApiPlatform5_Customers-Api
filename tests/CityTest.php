@@ -6,8 +6,10 @@ use ApiPlatform\Test\ApiTestCase;
 use App\DataFixtures\CityFixtures;
 use App\DataFixtures\CountryFixtures;
 use App\DataFixtures\UserFixtures;
+use App\Entity\City;
+use App\Entity\Country;
 use App\Entity\User;
-use Doctrine\Common\DataFixtures\Purger\ORMPurger;
+use App\Tests\Support\FindsFixtureIds;
 use Doctrine\ORM\EntityManagerInterface;
 use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
 use Liip\TestFixturesBundle\Services\DatabaseTools\AbstractDatabaseTool;
@@ -15,6 +17,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class CityTest extends ApiTestCase
 {
+    use FindsFixtureIds;
+
     protected static ?bool $alwaysBootKernel = true;
 
     private HttpClientInterface $client;
@@ -26,7 +30,7 @@ class CityTest extends ApiTestCase
     {
         $this->client = $this->createClient();
         $this->entityManager = $this->client->getContainer()->get('doctrine')->getManager();
-        $this->databaseTool = $this->client->getContainer()->get(DatabaseToolCollection::class)->get()->withPurgeMode(ORMPurger::PURGE_MODE_TRUNCATE);
+        $this->databaseTool = $this->client->getContainer()->get(DatabaseToolCollection::class)->get();
     }
 
     public function testGetCollection(): void
@@ -80,7 +84,7 @@ class CityTest extends ApiTestCase
             ],
             'json' => [
                 'name' => 'Hamburg',
-                'country' => '/api/countries/1',
+                'country' => '/api/countries/'.$this->idOf(Country::class, 'Germany'),
             ],
         ]);
 
@@ -104,7 +108,7 @@ class CityTest extends ApiTestCase
             CityFixtures::class,
         ]);
         $apiToken = $this->getUserApiToken();
-        $response = $this->client->request('GET', '/api/cities/1', [
+        $response = $this->client->request('GET', '/api/cities/'.$this->idOf(City::class, 'Berlin'), [
             'headers' => [
                 'x-api-key' => $apiToken,
                 'Accept' => 'application/ld+json',
@@ -116,10 +120,10 @@ class CityTest extends ApiTestCase
         $this->assertResponseIsSuccessful();
         $this->assertJsonContains([
             '@context' => '/api/contexts/City',
-            '@id' => '/api/cities/1',
+            '@id' => '/api/cities/'.$this->idOf(City::class, 'Berlin'),
             'name' => 'Berlin',
             'country' => [
-                '@id' => '/api/countries/1',
+                '@id' => '/api/countries/'.$this->idOf(Country::class, 'Germany'),
                 '@type' => 'Country',
             ],
         ]);
@@ -141,7 +145,9 @@ class CityTest extends ApiTestCase
             CityFixtures::class,
         ]);
         $apiToken = $this->getUserApiToken();
-        $this->client->request('PUT', '/api/cities/1', [
+        $cityId = $this->idOf(City::class, 'Berlin');
+        $countryId = $this->idOf(Country::class, 'Germany');
+        $this->client->request('PUT', '/api/cities/'.$cityId, [
             'headers' => [
                 'x-api-key' => $apiToken,
                 'Accept' => 'application/ld+json',
@@ -149,16 +155,16 @@ class CityTest extends ApiTestCase
             ],
             'json' => [
                 'name' => 'Bochum',
-                'country' => '/api/countries/1',
+                'country' => '/api/countries/'.$countryId,
             ],
         ]);
 
         $this->assertResponseIsSuccessful();
         $this->assertJsonContains([
-            '@id' => '/api/cities/1',
+            '@id' => '/api/cities/'.$cityId,
             'name' => 'Bochum',
             'country' => [
-                '@id' => '/api/countries/1',
+                '@id' => '/api/countries/'.$countryId,
                 '@type' => 'Country',
             ],
         ]);
@@ -173,7 +179,7 @@ class CityTest extends ApiTestCase
         ]);
         $apiToken = $this->getUserApiToken();
 
-        $response = $this->client->request('DELETE', '/api/cities/1', [
+        $response = $this->client->request('DELETE', '/api/cities/'.$this->idOf(City::class, 'Berlin'), [
             'headers' => [
                 'x-api-key' => $apiToken,
                 'Accept' => 'application/ld+json',
@@ -201,7 +207,7 @@ class CityTest extends ApiTestCase
             ],
             'json' => [
                 'name' => 12345,
-                'country' => '/api/countries/1',
+                'country' => '/api/countries/'.$this->idOf(Country::class, 'Germany'),
             ],
         ]);
         $this->assertResponseStatusCodeSame(422);
