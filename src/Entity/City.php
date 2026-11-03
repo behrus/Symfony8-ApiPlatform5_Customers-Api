@@ -58,6 +58,7 @@ class City
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'city')]
+    #[ORM\JoinColumn(nullable: false)]
     #[Groups(['address:read', 'city:read', 'city:write'])]
     private Country $country;
 

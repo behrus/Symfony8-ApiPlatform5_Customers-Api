@@ -69,11 +69,11 @@ class Customer
     private string $phone;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    #[Groups(['address:read', 'city:write', 'city:read'])]
+    #[Groups(['customer:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    #[Groups(['address:read', 'city:write', 'city:read'])]
+    #[Groups(['customer:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     /** @var Collection<int, Address> */

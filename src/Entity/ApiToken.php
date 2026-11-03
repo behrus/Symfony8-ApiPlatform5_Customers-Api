@@ -21,6 +21,7 @@ class ApiToken
     private string $token;
 
     #[ORM\ManyToOne(inversedBy: 'apiTokens')]
+    #[ORM\JoinColumn(nullable: false)]
     private User $user;
 
     public function __construct()

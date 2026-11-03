@@ -70,11 +70,13 @@ class Address
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'address')]
+    #[ORM\JoinColumn(nullable: false)]
     #[Groups(['address:read', 'address:write', 'customer:read', 'customer:write'])]
     #[Assert\Valid]
     private Customer $customer;
 
     #[ORM\ManyToOne(inversedBy: 'address')]
+    #[ORM\JoinColumn(nullable: false)]
     #[Groups(['address:read', 'address:write', 'customer:read', 'customer:write'])]
     #[Assert\Valid]
     private City $city;
