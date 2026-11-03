@@ -122,3 +122,9 @@ docker compose exec web php bin/console doctrine:schema:validate         # entit
 - **No anonymisation yet.** The email of a soft-deleted customer cannot be used again, and `/api/addresses` still shows the addresses of a deleted customer.
 - **Messenger has no failure transport.** A message that keeps failing is dropped after the retries.
 - **Request logging (dev only).** `LogRequestAndResponseEventListener` writes all request headers (including `x-api-key`) and the full response body to `var/log/request/` (kept for 90 days). Do not use it with real data.
+
+## License
+
+The code of this repository is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE). In short: you may use it for noncommercial purposes; for commercial use you need a separate license from the author. The full text in `LICENSE` is the only binding version.
+
+The third-party packages installed with Composer (not part of this repository) keep their own licenses. At the time of writing these are MIT (for example Symfony, Copyright (c) Fabien Potencier) and BSD-3-Clause.
