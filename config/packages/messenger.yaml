@@ -1,0 +1,14 @@
+framework:
+    messenger:
+        transports:
+            # https://symfony.com/doc/current/messenger.html#transport-configuration
+            async: '%env(MESSENGER_TRANSPORT_DSN)%'
+
+        # Messages are routed to a transport with the #[AsMessage] attribute on the message class.
+
+when@test:
+    framework:
+        messenger:
+            transports:
+                # Messages stay in memory; tests check them with the "messenger.transport.async" service.
+                async: 'in-memory://'

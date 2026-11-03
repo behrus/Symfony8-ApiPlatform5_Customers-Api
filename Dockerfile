@@ -1,6 +1,7 @@
 FROM dunglas/frankenphp:1-php8.4-alpine
 
-RUN install-php-extensions pdo_mysql intl opcache zip
+# amqp: required by symfony/amqp-messenger (RabbitMQ transport for Messenger).
+RUN install-php-extensions pdo_mysql intl opcache zip amqp
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

@@ -14,6 +14,7 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\QueryParameter;
 use App\Repository\CustomerRepository;
+use App\State\CustomerCreatedProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -28,7 +29,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     operations: [
         new Get(),
         new GetCollection(),
-        new Post(),
+        new Post(processor: CustomerCreatedProcessor::class),
         new Put(),
         new Patch(),
         new Delete(security: 'is_granted("CUSTOMER_DELETE", object)'),

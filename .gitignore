@@ -35,3 +35,7 @@
 /phpunit.xml
 /.phpunit.cache/
 ###< phpunit/phpunit ###
+
+###> private notes ###
+/docs/notes/
+###< private notes ###
