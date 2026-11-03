@@ -47,7 +47,7 @@ class CustomerTest extends ApiTestCase
         $this->assertNotNull($this->entityManager->getRepository(Customer::class)->find($id));
     }
 
-    public function testAdminCanDelete(): void
+    public function testAdminDeleteMarksCustomerAsDeleted(): void
     {
         $id = $this->firstCustomerId();
 
@@ -57,7 +57,9 @@ class CustomerTest extends ApiTestCase
 
         $this->assertResponseStatusCodeSame(204);
         $this->entityManager->clear();
-        $this->assertNull($this->entityManager->getRepository(Customer::class)->find($id));
+        $customer = $this->entityManager->getRepository(Customer::class)->find($id);
+        $this->assertNotNull($customer, 'A customer is never deleted from the database.');
+        $this->assertNotNull($customer->getDeletedAt());
     }
 
     public function testCreateDispatchesCustomerCreated(): void

@@ -15,6 +15,7 @@ use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\QueryParameter;
 use App\Repository\CustomerRepository;
 use App\State\CustomerCreatedProcessor;
+use App\State\SoftDeleteProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -32,7 +33,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Post(processor: CustomerCreatedProcessor::class),
         new Put(),
         new Patch(),
-        new Delete(security: 'is_granted("CUSTOMER_DELETE", object)'),
+        new Delete(security: 'is_granted("CUSTOMER_DELETE", object)', processor: SoftDeleteProcessor::class),
     ],
     normalizationContext: ['groups' => ['customer:read']],
     denormalizationContext: ['groups' => ['customer:write', 'address:write']],
@@ -75,6 +76,9 @@ class Customer
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     #[Groups(['customer:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $deletedAt = null;
 
     /** @var Collection<int, Address> */
     #[ORM\OneToMany(
@@ -142,6 +146,16 @@ class Customer
         if ($this->getCreatedAt() === null) {
             $this->createdAt = new \DateTimeImmutable();
         }
+    }
+
+    public function markAsDeleted(): void
+    {
+        $this->deletedAt = new \DateTimeImmutable();
+    }
+
+    public function getDeletedAt(): ?\DateTimeImmutable
+    {
+        return $this->deletedAt;
     }
 
     public function getCreatedAt(): ?\DateTimeImmutable
