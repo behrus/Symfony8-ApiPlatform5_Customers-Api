@@ -34,6 +34,9 @@ services:
     command: php bin/console messenger:consume async -vv --time-limit=3600 --memory-limit=128M
     # The worker stops by design after the time limit (to free memory); Docker starts it again.
     restart: unless-stopped
+    # The image's healthcheck asks Caddy (localhost:2019); the worker does not run Caddy.
+    healthcheck:
+      disable: true
     volumes:
       - .:/app
     depends_on:
