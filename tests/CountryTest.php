@@ -6,6 +6,7 @@ use ApiPlatform\Test\ApiTestCase;
 use App\DataFixtures\CountryFixtures;
 use App\DataFixtures\UserFixtures;
 use App\Entity\User;
+use Doctrine\Common\DataFixtures\Purger\ORMPurger;
 use Doctrine\ORM\EntityManagerInterface;
 use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
 use Liip\TestFixturesBundle\Services\DatabaseTools\AbstractDatabaseTool;
@@ -24,7 +25,7 @@ class CountryTest extends ApiTestCase
     {
         $this->client = $this->createClient();
         $this->entityManager = $this->client->getContainer()->get('doctrine')->getManager();
-        $this->databaseTool = $this->client->getContainer()->get(DatabaseToolCollection::class)->get();
+        $this->databaseTool = $this->client->getContainer()->get(DatabaseToolCollection::class)->get()->withPurgeMode(ORMPurger::PURGE_MODE_TRUNCATE);
     }
 
     public function testGetCollection(): void

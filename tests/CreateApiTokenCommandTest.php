@@ -5,6 +5,7 @@ namespace App\Tests;
 use ApiPlatform\Test\ApiTestCase;
 use App\DataFixtures\UserFixtures;
 use App\Entity\ApiToken;
+use Doctrine\Common\DataFixtures\Purger\ORMPurger;
 use Doctrine\ORM\EntityManagerInterface;
 use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -24,7 +25,7 @@ class CreateApiTokenCommandTest extends ApiTestCase
     {
         $this->client = $this->createClient();
         $this->entityManager = $this->client->getContainer()->get('doctrine')->getManager();
-        $this->client->getContainer()->get(DatabaseToolCollection::class)->get()->loadFixtures([
+        $this->client->getContainer()->get(DatabaseToolCollection::class)->get()->withPurgeMode(ORMPurger::PURGE_MODE_TRUNCATE)->loadFixtures([
             UserFixtures::class,
         ]);
 
