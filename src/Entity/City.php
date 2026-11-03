@@ -10,6 +10,7 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Repository\CityRepository;
+use App\State\RestrictedDeleteProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -27,7 +28,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Post(),
         new Put(),
         new Patch(),
-        new Delete(),
+        new Delete(processor: RestrictedDeleteProcessor::class),
     ],
     normalizationContext: [
         'groups' => ['address:read', 'city:read'],
@@ -63,12 +64,7 @@ class City
     private Country $country;
 
     /** @var Collection<int, Address> */
-    #[ORM\OneToMany(
-        targetEntity: Address::class,
-        mappedBy: 'city',
-        cascade: ['remove'],
-        orphanRemoval: true,
-    )]
+    #[ORM\OneToMany(targetEntity: Address::class, mappedBy: 'city')]
     private Collection $address;
 
     public function __construct()

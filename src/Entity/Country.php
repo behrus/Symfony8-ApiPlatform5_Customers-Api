@@ -10,6 +10,7 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Repository\CountryRepository;
+use App\State\RestrictedDeleteProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -27,7 +28,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Post(),
         new Put(),
         new Patch(),
-        new Delete(),
+        new Delete(processor: RestrictedDeleteProcessor::class),
     ],
     normalizationContext: [
         'groups' => ['country:read', 'city:read'],
@@ -58,7 +59,7 @@ class Country
     private ?\DateTimeImmutable $updatedAt = null;
 
     /** @var Collection<int, City> */
-    #[ORM\OneToMany(targetEntity: City::class, mappedBy: 'country', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: City::class, mappedBy: 'country')]
     private Collection $city;
 
     public function __construct()
