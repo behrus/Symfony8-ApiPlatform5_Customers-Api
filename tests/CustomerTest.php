@@ -11,6 +11,7 @@ use App\Entity\Address;
 use App\Entity\Customer;
 use App\Entity\User;
 use App\Message\CustomerCreated;
+use App\Tests\Support\FindsFixtureIds;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
@@ -19,6 +20,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class CustomerTest extends ApiTestCase
 {
+    use FindsFixtureIds;
+
     protected static ?bool $alwaysBootKernel = true;
 
     private HttpClientInterface $client;
@@ -191,6 +194,22 @@ class CustomerTest extends ApiTestCase
         ]);
 
         $this->assertResponseStatusCodeSame(422);
+    }
+
+    public function testAddressesOfDeletedCustomerAreHidden(): void
+    {
+        $id = $this->idOf(Customer::class, 'Anna Schmidt');
+        $addressId = $this->entityManager->getRepository(Customer::class)->find($id)->getAddress()->first()->getId();
+        $this->client->request('GET', '/api/addresses/'.$addressId, ['headers' => $this->headers('test@example.com')]);
+        $this->assertResponseStatusCodeSame(200);
+
+        $this->deleteAsAdmin($id);
+
+        $this->client->request('GET', '/api/addresses/'.$addressId, ['headers' => $this->headers('test@example.com')]);
+        $this->assertResponseStatusCodeSame(404);
+        $list = $this->client->request('GET', '/api/addresses', ['headers' => $this->headers('test@example.com')])->toArray();
+        $this->assertNotContains('/api/addresses/'.$addressId, array_column($list['hydra:member'], '@id'));
+        $this->assertNotContains('/api/customers/'.$id, array_column($list['hydra:member'], 'customer'));
     }
 
     private function deleteAsAdmin(int $id): void

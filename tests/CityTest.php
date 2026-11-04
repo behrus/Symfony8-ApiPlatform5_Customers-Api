@@ -170,7 +170,7 @@ class CityTest extends ApiTestCase
         ]);
     }
 
-    public function testDeleteCitySuccess(): void
+    public function testCityCanNotBeDeleted(): void
     {
         $this->databaseTool->loadFixtures([
             UserFixtures::class,
@@ -178,16 +178,45 @@ class CityTest extends ApiTestCase
             CityFixtures::class,
         ]);
         $apiToken = $this->getUserApiToken();
+        $id = $this->idOf(City::class, 'Berlin');
 
-        $response = $this->client->request('DELETE', '/api/cities/'.$this->idOf(City::class, 'Berlin'), [
+        $this->client->request('DELETE', '/api/cities/'.$id, [
+            'headers' => [
+                'x-api-key' => $apiToken,
+                'Accept' => 'application/ld+json',
+            ],
+        ]);
+
+        $this->assertResponseStatusCodeSame(405);
+        $this->entityManager->clear();
+        $this->assertNotNull($this->entityManager->getRepository(City::class)->find($id));
+    }
+
+    public function testCreateCityWithoutCountryIsRejected(): void
+    {
+        $this->databaseTool->loadFixtures([
+            UserFixtures::class,
+            CountryFixtures::class,
+            CityFixtures::class,
+        ]);
+        $apiToken = $this->getUserApiToken();
+        $cities = $this->entityManager->getRepository(City::class)->count([]);
+
+        $this->client->request('POST', '/api/cities', [
             'headers' => [
                 'x-api-key' => $apiToken,
                 'Accept' => 'application/ld+json',
                 'Content-Type' => 'application/ld+json',
             ],
+            'json' => ['name' => 'Ohne Country'],
         ]);
 
-        $this->assertResponseIsSuccessful();
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertJsonContains(['violations' => [[
+            'propertyPath' => 'country',
+            'message' => 'A city without a country cannot be created',
+        ]]]);
+        $this->assertSame($cities, $this->entityManager->getRepository(City::class)->count([]));
     }
 
     public function testCreateCitytFailed(): void

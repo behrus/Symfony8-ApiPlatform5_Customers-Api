@@ -153,24 +153,25 @@ class CountryTest extends ApiTestCase
         ]);
     }
 
-    public function testDeleteCountrySuccess(): void
+    public function testCountryCanNotBeDeleted(): void
     {
         $this->databaseTool->loadFixtures([
             CountryFixtures::class,
             UserFixtures::class,
         ]);
         $apiToken = $this->getUserApiToken();
+        $id = $this->idOf(Country::class, 'France');
 
-        $response = $this->client->request('DELETE', '/api/countries/'.$this->idOf(Country::class, 'France'), [
+        $this->client->request('DELETE', '/api/countries/'.$id, [
             'headers' => [
                 'x-api-key' => $apiToken,
                 'Accept' => 'application/ld+json',
-                'Content-Type' => 'application/ld+json',
             ],
         ]);
 
-        // dd($response);
-        $this->assertResponseIsSuccessful();
+        $this->assertResponseStatusCodeSame(405);
+        $this->entityManager->clear();
+        $this->assertNotNull($this->entityManager->getRepository(Country::class)->find($id));
     }
 
     public function testCreateCountrytFailed(): void

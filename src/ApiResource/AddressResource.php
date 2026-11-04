@@ -76,7 +76,7 @@ final class AddressResource
 
     // Only checked on /api/addresses: inside POST /api/customers the customer is the one being created.
     #[Groups(['address:read', 'address:write', 'customer:read'])]
-    #[Assert\NotNull(message: 'Adresse ohne Customer kann nicht eingetragen werden', groups: ['address:standalone'])]
+    #[Assert\NotNull(message: 'An address without a customer cannot be created', groups: ['address:standalone'])]
     #[Map(if: new IsNotNull())]
     public ?CustomerResource $customer = null;
 

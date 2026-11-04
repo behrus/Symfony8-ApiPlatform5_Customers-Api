@@ -18,7 +18,7 @@ Project facts for the assistant (commands, architecture, decisions) are in `CLAU
 ## Examples from this project
 
 - **User API hardening.** A throwaway test showed that `GET /api/users` returned the password hash and that `POST`/`PATCH` stored passwords in plain text. The fix added serialization groups and a test.
-- **Deleting a country or city.** First a test pinned the old behaviour (deleting a country removed its cities and addresses). Then the cascade was removed on purpose. A test then showed that API Platform answers `500` with the raw SQL message, so a small processor turns the foreign key error into `409`.
+- **Deleting a country or city.** First a test pinned the old behaviour (deleting a country removed its cities and addresses). Then the cascade was removed on purpose. A test then showed that API Platform answers `500` with the raw SQL message, so a small processor turned the foreign key error into `409`. Finally the developer decided that countries and cities are never deleted, and the processor was removed with the `DELETE` operation.
 - **Soft delete for customers.** Gedmo `SoftDeleteable` was tried first in a throwaway script (it works with ORM 3). The decision for a small own `deletedAt` field and processor was made by the developer, to avoid a package for one feature.
 - **Slow tests.** Reading the Liip source showed that every fixture load dropped and rebuilt the schema from the entities. The tests never ran against the migrations, and the suite took about two minutes. With `keep_database_and_schema` and tests that do not depend on fixed ids, it takes about ten seconds and `schema:validate` runs in CI.
 

@@ -96,8 +96,8 @@ Headers for a REST client:
 | --- | --- | --- | --- |
 | Customer | `/api/customers` | list, get, post, put, patch, delete | `ROLE_USER`; `DELETE` only `ROLE_ADMIN` (voter `CUSTOMER_DELETE`) |
 | Address | `/api/addresses` | list, get, post, put, patch, delete | `ROLE_USER` |
-| City | `/api/cities` | list, get, post, put, patch, delete | `ROLE_USER` |
-| Country | `/api/countries` | list, get, post, put, patch, delete | `ROLE_USER` |
+| City | `/api/cities` | list, get, post, put, patch (never deleted) | `ROLE_USER` |
+| Country | `/api/countries` | list, get, post, put, patch (never deleted) | `ROLE_USER` |
 | User | `/api/users` | list, get, post, patch, delete | `ROLE_ADMIN` |
 | ApiToken | `/api/api_tokens` | list, get, delete (never shows a token or hash) | `ROLE_ADMIN` |
 
@@ -108,8 +108,8 @@ Every user also has `ROLE_USER`. The voter (`src/Security/Voter/CustomerVoter.ph
 - **Customer and Address are DTO resources** (`src/ApiResource`); the Doctrine entities only store data. `symfony/object-mapper` maps between them, and API Platform's Doctrine providers still read the entities, so the filters and the soft-delete query extension apply as before.
 - **Customers** can be filtered and ordered: `?name=`, `?email=` (partial, case-insensitive), `?address.city.name=` (exact) and `?order[name]=asc|desc`.
 - **Addresses can be sent with `POST /api/customers`** in the `address` list (`street`, `streetnumber`, `zipcode` and `city` as IRI, for example `{"name": "Jane Doe", "email": "jane@example.com", "phone": "0301234567", "address": [{"street": "Hauptstr", "streetnumber": "1", "zipcode": "10115", "city": "/api/cities/13"}]}`). The customer and its addresses are saved together; an invalid address answers `422` and nothing is saved. `PUT` and `PATCH /api/customers/{id}` change only the customer fields and never touch its addresses. Change or add addresses of an existing customer through `/api/addresses` (`"customer": "/api/customers/41"`). Relations are always IRIs (the whole path), not plain ids; `"customer": "41"` answers `400`.
-- **Deleting a customer is a soft delete.** `DELETE` sets `deletedAt`; the row and its addresses stay for traceability. Deleted customers are not listed and answer `404`. The email of a deleted customer stays taken.
-- **Deleting a country or city that still has children is refused** with `409 Conflict`; nothing is removed.
+- **Deleting a customer is a soft delete.** `DELETE` sets `deletedAt`; the row and its addresses stay in the database for traceability. Deleted customers and their addresses are not listed and answer `404`. The email of a deleted customer stays taken.
+- **Countries and cities are never deleted** (`DELETE` is not offered and answers `405`). A city without a country is refused with `422`.
 - Invalid input answers `422` (validation) with a Hydra error body.
 - The unique `email` of a customer is checked by the validator and by a database index.
 
@@ -160,7 +160,7 @@ docker compose exec web php bin/console doctrine:schema:validate         # entit
 - **No login and no registration.** An admin creates users, and tokens are created on the server with `app:api-token:create`. The two demo tokens are public (local use only).
 - **Tokens do not expire.** They are stored as SHA-256 hashes and shown once; an admin revokes a token with `DELETE /api/api_tokens/{id}`.
 - **Addresses inside `PUT` or `PATCH /api/customers` are ignored** (no error, and they are not part of the request schema in Swagger). This is a design decision for now: a rule is missing for what a list should mean (replace or add), and a replace deletes the existing addresses.
-- **No anonymisation yet.** The email of a soft-deleted customer cannot be used again, and `/api/addresses` still shows the addresses of a deleted customer.
+- **No anonymisation yet.** The email of a soft-deleted customer cannot be used again, and its addresses stay in the database (hidden from the API).
 - **Messenger has no failure transport.** A message that keeps failing is dropped after the retries.
 - **Request logging (dev only).** `LogRequestAndResponseEventListener` writes all request headers (including `x-api-key`) and the full response body to `var/log/request/` (kept for 90 days). Do not use it with real data.
 

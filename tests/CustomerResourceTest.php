@@ -224,7 +224,7 @@ class CustomerResourceTest extends ApiTestCase
         $this->assertResponseStatusCodeSame(422);
         $this->assertJsonContains(['violations' => [[
             'propertyPath' => 'customer',
-            'message' => 'Adresse ohne Customer kann nicht eingetragen werden',
+            'message' => 'An address without a customer cannot be created',
         ]]]);
         $this->assertSame($addresses, $this->entityManager->getRepository(Address::class)->count([]));
     }

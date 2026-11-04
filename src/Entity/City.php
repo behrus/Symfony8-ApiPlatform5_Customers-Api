@@ -3,14 +3,12 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Repository\CityRepository;
-use App\State\RestrictedDeleteProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -28,7 +26,6 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Post(),
         new Put(),
         new Patch(),
-        new Delete(processor: RestrictedDeleteProcessor::class),
     ],
     normalizationContext: [
         'groups' => ['address:read', 'city:read'],
@@ -61,6 +58,7 @@ class City
     #[ORM\ManyToOne(inversedBy: 'city')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['address:read', 'city:read', 'city:write'])]
+    #[Assert\NotNull(message: 'A city without a country cannot be created')]
     private Country $country;
 
     /** @var Collection<int, Address> */
