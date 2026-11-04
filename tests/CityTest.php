@@ -192,7 +192,7 @@ class CityTest extends ApiTestCase
         $this->assertNotNull($this->entityManager->getRepository(City::class)->find($id));
     }
 
-    public function testCreateCityWithoutCountryIsRejected(): void
+    public function testCreateCityAssignsGermany(): void
     {
         $this->databaseTool->loadFixtures([
             UserFixtures::class,
@@ -200,23 +200,21 @@ class CityTest extends ApiTestCase
             CityFixtures::class,
         ]);
         $apiToken = $this->getUserApiToken();
-        $cities = $this->entityManager->getRepository(City::class)->count([]);
 
-        $this->client->request('POST', '/api/cities', [
+        $response = $this->client->request('POST', '/api/cities', [
             'headers' => [
                 'x-api-key' => $apiToken,
                 'Accept' => 'application/ld+json',
                 'Content-Type' => 'application/ld+json',
             ],
-            'json' => ['name' => 'Ohne Country'],
+            'json' => ['name' => 'Hamburg'],
         ]);
 
-        $this->assertResponseStatusCodeSame(422);
-        $this->assertJsonContains(['violations' => [[
-            'propertyPath' => 'country',
-            'message' => 'A city without a country cannot be created',
-        ]]]);
-        $this->assertSame($cities, $this->entityManager->getRepository(City::class)->count([]));
+        $this->assertResponseStatusCodeSame(201);
+        $this->assertSame('/api/countries/'.$this->idOf(Country::class, 'Germany'), $response->toArray()['country']['@id']);
+        $this->entityManager->clear();
+        $city = $this->entityManager->getRepository(City::class)->findOneBy(['name' => 'Hamburg']);
+        $this->assertSame('Germany', $city->getCountry()->getName());
     }
 
     public function testCreateCitytFailed(): void

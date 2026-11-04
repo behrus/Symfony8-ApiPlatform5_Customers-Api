@@ -5,9 +5,6 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Patch;
-use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Put;
 use App\Repository\CountryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -23,15 +20,9 @@ use Symfony\Component\Validator\Constraints as Assert;
     operations: [
         new Get(),
         new GetCollection(),
-        new Post(),
-        new Put(),
-        new Patch(),
     ],
     normalizationContext: [
         'groups' => ['country:read', 'city:read'],
-    ],
-    denormalizationContext: [
-        'groups' => ['country:write'],
     ],
     security: 'is_granted("ROLE_USER")',
 )]
@@ -43,7 +34,7 @@ class Country
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
-    #[Groups(['city:read', 'address:read', 'customer:read', 'country:write', 'country:read'])]
+    #[Groups(['city:read', 'address:read', 'customer:read', 'country:read'])]
     #[Assert\NotBlank]
     private string $name;
 

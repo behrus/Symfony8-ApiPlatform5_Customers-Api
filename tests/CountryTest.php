@@ -58,41 +58,10 @@ class CountryTest extends ApiTestCase
             '@context' => '/api/contexts/Country',
             '@id' => '/api/countries',
             '@type' => 'hydra:Collection',
-            'hydra:totalItems' => 2,
+            'hydra:totalItems' => 1,
         ]);
 
-        $this->assertCount(2, $response->toArray()['hydra:member']);
-    }
-
-    public function testCreateCountrySuccess(): void
-    {
-        $this->databaseTool->loadFixtures([
-            CountryFixtures::class,
-            UserFixtures::class,
-        ]);
-        $apiToken = $this->getUserApiToken();
-
-        $this->client->request('POST', '/api/countries', [
-            'headers' => [
-                'x-api-key' => $apiToken,
-                'Accept' => 'application/ld+json',
-                'Content-Type' => 'application/ld+json',
-            ],
-            'json' => [
-                'name' => 'Austria',
-            ],
-        ]);
-
-        $this->assertResponseStatusCodeSame(201);
-
-        $this->assertResponseHeaderSame(
-            'content-type',
-            'application/ld+json'
-        );
-
-        $this->assertJsonContains([
-            'name' => 'Austria',
-        ]);
+        $this->assertCount(1, $response->toArray()['hydra:member']);
     }
 
     public function testGetCountrySuccess(): void
@@ -102,7 +71,7 @@ class CountryTest extends ApiTestCase
             UserFixtures::class,
         ]);
         $apiToken = $this->getUserApiToken();
-        $response = $this->client->request('GET', '/api/countries/'.$this->idOf(Country::class, 'France'), [
+        $response = $this->client->request('GET', '/api/countries/'.$this->idOf(Country::class, 'Germany'), [
             'headers' => [
                 'x-api-key' => $apiToken,
                 'Accept' => 'application/ld+json',
@@ -114,9 +83,34 @@ class CountryTest extends ApiTestCase
         $this->assertResponseIsSuccessful();
         $this->assertJsonContains([
             '@context' => '/api/contexts/Country',
-            '@id' => '/api/countries/'.$this->idOf(Country::class, 'France'),
-            'name' => 'France',
+            '@id' => '/api/countries/'.$this->idOf(Country::class, 'Germany'),
+            'name' => 'Germany',
         ]);
+    }
+
+    public function testCountryIsReadOnly(): void
+    {
+        $this->databaseTool->loadFixtures([
+            CountryFixtures::class,
+            UserFixtures::class,
+        ]);
+        $id = $this->idOf(Country::class, 'Germany');
+
+        foreach ([['POST', '/api/countries'], ['PUT', '/api/countries/'.$id], ['PATCH', '/api/countries/'.$id], ['DELETE', '/api/countries/'.$id]] as [$method, $url]) {
+            $this->client->request($method, $url, [
+                'headers' => [
+                    'x-api-key' => $this->getUserApiToken(),
+                    'Accept' => 'application/ld+json',
+                    'Content-Type' => 'PATCH' === $method ? 'application/merge-patch+json' : 'application/ld+json',
+                ],
+                'json' => ['name' => 'Changed'],
+            ]);
+
+            $this->assertResponseStatusCodeSame(405, $method);
+        }
+
+        $this->entityManager->clear();
+        $this->assertSame('Germany', $this->entityManager->getRepository(Country::class)->find($id)->getName());
     }
 
     private function getUserApiToken(): string
@@ -125,79 +119,6 @@ class CountryTest extends ApiTestCase
         $user = $userRepository->findOneBy(['email' => 'test@example.com']);
 
         return UserFixtures::tokenFor($user->getEmail());
-    }
-
-    public function testUpdateCountrySuccess(): void
-    {
-        $this->databaseTool->loadFixtures([
-            CountryFixtures::class,
-            UserFixtures::class,
-        ]);
-        $apiToken = $this->getUserApiToken();
-        $countryId = $this->idOf(Country::class, 'Germany');
-        $this->client->request('PUT', '/api/countries/'.$countryId, [
-            'headers' => [
-                'x-api-key' => $apiToken,
-                'Accept' => 'application/ld+json',
-                'Content-Type' => 'application/ld+json',
-            ],
-            'json' => [
-                'name' => 'Italy',
-            ],
-        ]);
-
-        $this->assertResponseIsSuccessful();
-        $this->assertJsonContains([
-            '@id' => '/api/countries/'.$countryId,
-            'name' => 'Italy',
-        ]);
-    }
-
-    public function testCountryCanNotBeDeleted(): void
-    {
-        $this->databaseTool->loadFixtures([
-            CountryFixtures::class,
-            UserFixtures::class,
-        ]);
-        $apiToken = $this->getUserApiToken();
-        $id = $this->idOf(Country::class, 'France');
-
-        $this->client->request('DELETE', '/api/countries/'.$id, [
-            'headers' => [
-                'x-api-key' => $apiToken,
-                'Accept' => 'application/ld+json',
-            ],
-        ]);
-
-        $this->assertResponseStatusCodeSame(405);
-        $this->entityManager->clear();
-        $this->assertNotNull($this->entityManager->getRepository(Country::class)->find($id));
-    }
-
-    public function testCreateCountrytFailed(): void
-    {
-        $this->databaseTool->loadFixtures([
-            CountryFixtures::class,
-            UserFixtures::class,
-        ]);
-        $apiToken = $this->getUserApiToken();
-
-        $response = $this->client->request('POST', '/api/countries', [
-            'headers' => [
-                'x-api-key' => $apiToken,
-                'Accept' => 'application/ld+json',
-                'Content-Type' => 'application/ld+json',
-            ],
-            'json' => [
-                'name' => 12345,
-            ],
-        ]);
-        $this->assertResponseStatusCodeSame(422);
-        $this->assertJsonContains([
-            '@type' => 'ConstraintViolation',
-            'status' => 422,
-            'detail' => 'name: This value should be of type string.',
-        ]);
     }
 
     /*        public function testInvalidToken(): void

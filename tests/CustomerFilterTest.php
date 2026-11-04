@@ -62,9 +62,9 @@ class CustomerFilterTest extends ApiTestCase
             'email is partial and ignores case' => ['email=EXAMPLE.ORG', ['Bernd Schmitt']],
             'city is exact' => ['address.city.name=Berlin', ['Anna Schmidt', 'Bernd Schmitt']],
             'city ignores case' => ['address.city.name=berlin', ['Anna Schmidt', 'Bernd Schmitt']],
-            'city with two addresses has no duplicate' => ['address.city.name=Paris', ['Bernd Schmitt', 'Clara Meier']],
+            'city with two addresses has no duplicate' => ['address.city.name=Hamburg', ['Bernd Schmitt', 'Clara Meier']],
             'city is not partial' => ['address.city.name=Ber', []],
-            'filters are combined with AND' => ['name=schmi&address.city.name=Paris', ['Bernd Schmitt']],
+            'filters are combined with AND' => ['name=schmi&address.city.name=Hamburg', ['Bernd Schmitt']],
             'unknown filter is ignored' => ['foo=bar', ['Anna Schmidt', 'Bernd Schmitt', 'Clara Meier', 'Dora Müller']],
         ];
     }

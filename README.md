@@ -96,8 +96,8 @@ Headers for a REST client:
 | --- | --- | --- | --- |
 | Customer | `/api/customers` | list, get, post, put, patch, delete | `ROLE_USER`; `DELETE` only `ROLE_ADMIN` (voter `CUSTOMER_DELETE`) |
 | Address | `/api/addresses` | list, get, post, put, patch, delete | `ROLE_USER` |
-| City | `/api/cities` | list, get, post, put, patch (never deleted) | `ROLE_USER` |
-| Country | `/api/countries` | list, get, post, put, patch (never deleted) | `ROLE_USER` |
+| City | `/api/cities` | list, get, post, put, patch (never deleted; the country is always Germany) | `ROLE_USER` |
+| Country | `/api/countries` | list, get (read only) | `ROLE_USER` |
 | User | `/api/users` | list, get, post, patch, delete | `ROLE_ADMIN` |
 | ApiToken | `/api/api_tokens` | list, get, delete (never shows a token or hash) | `ROLE_ADMIN` |
 
@@ -109,7 +109,7 @@ Every user also has `ROLE_USER`. The voter (`src/Security/Voter/CustomerVoter.ph
 - **Customers** can be filtered and ordered: `?name=`, `?email=` (partial, case-insensitive), `?address.city.name=` (exact) and `?order[name]=asc|desc`.
 - **Addresses can be sent with `POST /api/customers`** in the `address` list (`street`, `streetnumber`, `zipcode` and `city` as IRI, for example `{"name": "Jane Doe", "email": "jane@example.com", "phone": "0301234567", "address": [{"street": "Hauptstr", "streetnumber": "1", "zipcode": "10115", "city": "/api/cities/13"}]}`). The customer and its addresses are saved together; an invalid address answers `422` and nothing is saved. `PUT` and `PATCH /api/customers/{id}` change only the customer fields and never touch its addresses. Change or add addresses of an existing customer through `/api/addresses` (`"customer": "/api/customers/41"`). Relations are always IRIs (the whole path), not plain ids; `"customer": "41"` answers `400`.
 - **Deleting a customer is a soft delete.** `DELETE` sets `deletedAt`; the row and its addresses stay in the database for traceability. Deleted customers and their addresses are not listed and answer `404`. The email of a deleted customer stays taken.
-- **Countries and cities are never deleted** (`DELETE` is not offered and answers `405`). A city without a country is refused with `422`.
+- **The API handles only Germany.** Countries are read only (the migration adds "Germany"), and every city gets Germany automatically: a `country` in the body of `POST`, `PUT` or `PATCH /api/cities` is ignored. Cities and countries are never deleted (`DELETE` answers `405`).
 - Invalid input answers `422` (validation) with a Hydra error body.
 - The unique `email` of a customer is checked by the validator and by a database index.
 

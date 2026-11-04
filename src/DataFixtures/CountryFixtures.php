@@ -18,12 +18,6 @@ class CountryFixtures extends Fixture implements OrderedFixtureInterface
 
         $this->addReference('country', $country);
 
-        $countryFR = new Country();
-        $countryFR->setName('France');
-        $manager->persist($countryFR);
-
-        $this->addReference('country_fr', $countryFR);
-
         // }
         $manager->flush();
     }

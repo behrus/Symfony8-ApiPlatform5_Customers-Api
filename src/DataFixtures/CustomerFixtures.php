@@ -16,16 +16,16 @@ class CustomerFixtures extends Fixture implements OrderedFixtureInterface
     {
         $berlin = $this->getReference('city', City::class);
 
-        $paris = new City();
-        $paris->setName('Paris');
-        $paris->setCountry($this->getReference('country_fr', Country::class));
-        $manager->persist($paris);
+        $hamburg = new City();
+        $hamburg->setName('Hamburg');
+        $hamburg->setCountry($this->getReference('country', Country::class));
+        $manager->persist($hamburg);
 
         // Not in alphabetical order, so that the order filter has something to prove.
-        $this->createCustomer($manager, 'Clara Meier', 'clara@example.com', [$paris]);
+        $this->createCustomer($manager, 'Clara Meier', 'clara@example.com', [$hamburg]);
         $this->createCustomer($manager, 'Anna Schmidt', 'anna@example.com', [$berlin]);
         $this->createCustomer($manager, 'Dora Müller', 'dora@example.com', []);
-        $this->createCustomer($manager, 'Bernd Schmitt', 'bernd@example.org', [$berlin, $paris]);
+        $this->createCustomer($manager, 'Bernd Schmitt', 'bernd@example.org', [$berlin, $hamburg]);
 
         $manager->flush();
     }
