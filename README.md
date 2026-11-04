@@ -43,6 +43,8 @@ From the token to the Messenger result, step by step:
    | `admin@example.com` | `ROLE_ADMIN` | `9a1f0c5e7b3d4826a0e1c7f35d8b2a64e91c0d7f3b5a8e2146c9d0f7a3b5e8c1d2f4a6b8c0e2d4f6a8b0c2e4d6f8a0b2c4e6d8f0a2b4c6e8d0f2a4b6c8e0d2f4` |
    | `test@example.com` | `ROLE_USER` | `12f3600378cbb476613d4cec52b56730bc0bcf77d5925538eeffd8dde2d3c4d71e8bb741f0b8cd6f090c328a7535340bf0e7121786566f1f60501d29` |
 
+   ![Swagger UI: the Authorize dialog with the x-api-key field](docs/img/authorize.png)
+
 3. Open `GET /api/customers`, click **Try it out** and **Execute**. The demo customers are listed. Without a token the API answers `401`.
 4. Open `POST /api/customers`, click **Try it out**, use this body and click **Execute** (`201`):
 
@@ -50,11 +52,17 @@ From the token to the Messenger result, step by step:
    {"name": "Jane Doe", "email": "jane@example.com", "phone": "0301234567"}
    ```
 
+   Swagger pre-fills the body with an example; replace all of it with the line above. Leave the query parameters empty (they belong to `GET`).
+
+   ![Swagger UI: POST /api/customers answers 201](docs/img/post-customer.png)
+
 5. The API has saved the customer and put a `CustomerCreated` message into RabbitMQ. The `worker` takes it and the handler writes a log line:
 
    ```bash
    docker compose logs -f worker
    ```
+
+   ![Worker log: CustomerCreated received, handled and acknowledged](docs/img/worker-log.png)
 
 6. Optional: the queue `messages` in the RabbitMQ UI (http://localhost:15672, `guest` / `guest`) shows the messages. The worker takes them within milliseconds, so the queue is mostly empty. To see a message in the queue, stop the worker first (`docker compose stop worker`), send the `POST`, and look at the queue; `docker compose start worker` processes it.
 7. Voter: click **Authorize**, **Logout**, and enter the user token. `DELETE /api/customers/{id}` now answers `403`. With the admin token it answers `204` (a soft delete, see [Behaviour of the endpoints](#behaviour-of-the-endpoints)).
