@@ -2,43 +2,13 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Delete;
-use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Patch;
-use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Put;
 use App\Repository\AddressRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AddressRepository::class)]
 #[ORM\HasLifecycleCallbacks]
-#[ApiResource(
-    description: 'Customer address.',
-    operations: [
-        new Get(
-            normalizationContext: [
-                'groups' => ['address:read', 'address:item:get'],
-            ],
-        ),
-        new GetCollection(),
-        new Post(),
-        new Put(),
-        new Patch(),
-        new Delete(),
-    ],
-    normalizationContext: [
-        'groups' => ['address:read', 'customer:read'],
-    ],
-    denormalizationContext: [
-        'groups' => ['address:write', 'customer:write'],
-    ],
-    security: 'is_granted("ROLE_USER")',
-)]
 class Address
 {
     #[ORM\Id]
@@ -47,37 +17,30 @@ class Address
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
-    #[Groups(['address:read', 'address:write', 'customer:read', 'customer:write'])]
     #[Assert\NotBlank]
     private string $street;
 
     #[ORM\Column(length: 5)]
-    #[Groups(['address:read', 'address:write', 'customer:read', 'customer:write'])]
     #[Assert\NotBlank]
     private string $streetnumber;
 
     #[ORM\Column(length: 5)]
-    #[Groups(['address:read', 'address:write', 'customer:read', 'customer:write'])]
     #[Assert\NotBlank]
     private string $zipcode;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    #[Groups(['address:read', 'city:write', 'city:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    #[Groups(['address:read', 'city:write', 'city:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'address')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['address:read', 'address:write', 'customer:read', 'customer:write'])]
     #[Assert\Valid]
     private Customer $customer;
 
     #[ORM\ManyToOne(inversedBy: 'address')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['address:read', 'address:write', 'customer:read', 'customer:write'])]
     #[Assert\Valid]
     private City $city;
 

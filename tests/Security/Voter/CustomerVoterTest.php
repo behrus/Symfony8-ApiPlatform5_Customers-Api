@@ -2,7 +2,7 @@
 
 namespace App\Tests\Security\Voter;
 
-use App\Entity\Customer;
+use App\ApiResource\CustomerResource;
 use App\Entity\User;
 use App\Security\Voter\CustomerVoter;
 use PHPUnit\Framework\TestCase;
@@ -14,7 +14,7 @@ class CustomerVoterTest extends TestCase
 {
     public function testAdminMayDelete(): void
     {
-        $result = (new CustomerVoter())->vote($this->token(['ROLE_ADMIN']), new Customer(), [CustomerVoter::DELETE]);
+        $result = (new CustomerVoter())->vote($this->token(['ROLE_ADMIN']), new CustomerResource(), [CustomerVoter::DELETE]);
 
         $this->assertSame(VoterInterface::ACCESS_GRANTED, $result);
     }
@@ -23,7 +23,7 @@ class CustomerVoterTest extends TestCase
     {
         $vote = new Vote();
 
-        $result = (new CustomerVoter())->vote($this->token(['ROLE_USER']), new Customer(), [CustomerVoter::DELETE], $vote);
+        $result = (new CustomerVoter())->vote($this->token(['ROLE_USER']), new CustomerResource(), [CustomerVoter::DELETE], $vote);
 
         $this->assertSame(VoterInterface::ACCESS_DENIED, $result);
         $this->assertSame(['Only admins may delete customers.'], $vote->reasons);
@@ -31,7 +31,7 @@ class CustomerVoterTest extends TestCase
 
     public function testAbstainsForOtherAttribute(): void
     {
-        $result = (new CustomerVoter())->vote($this->token(['ROLE_ADMIN']), new Customer(), ['CUSTOMER_VIEW']);
+        $result = (new CustomerVoter())->vote($this->token(['ROLE_ADMIN']), new CustomerResource(), ['CUSTOMER_VIEW']);
 
         $this->assertSame(VoterInterface::ACCESS_ABSTAIN, $result);
     }

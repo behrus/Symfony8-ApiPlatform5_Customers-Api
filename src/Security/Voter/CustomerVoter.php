@@ -2,13 +2,13 @@
 
 namespace App\Security\Voter;
 
-use App\Entity\Customer;
+use App\ApiResource\CustomerResource;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 /**
- * @extends Voter<string, Customer>
+ * @extends Voter<string, CustomerResource>
  */
 class CustomerVoter extends Voter
 {
@@ -16,7 +16,7 @@ class CustomerVoter extends Voter
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return self::DELETE === $attribute && $subject instanceof Customer;
+        return self::DELETE === $attribute && $subject instanceof CustomerResource;
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool

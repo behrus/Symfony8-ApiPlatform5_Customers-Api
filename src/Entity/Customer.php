@@ -2,50 +2,15 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Doctrine\Orm\Filter\ExactFilter;
-use ApiPlatform\Doctrine\Orm\Filter\PartialSearchFilter;
-use ApiPlatform\Doctrine\Orm\Filter\SortFilter;
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Delete;
-use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Patch;
-use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Put;
-use ApiPlatform\Metadata\QueryParameter;
 use App\Repository\CustomerRepository;
-use App\State\CustomerCreatedProcessor;
-use App\State\SoftDeleteProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
-use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
 #[ORM\HasLifecycleCallbacks]
-#[ApiResource(
-    operations: [
-        new Get(),
-        new GetCollection(),
-        new Post(processor: CustomerCreatedProcessor::class),
-        new Put(),
-        new Patch(),
-        new Delete(security: 'is_granted("CUSTOMER_DELETE", object)', processor: SoftDeleteProcessor::class),
-    ],
-    normalizationContext: ['groups' => ['customer:read']],
-    denormalizationContext: ['groups' => ['customer:write', 'address:write']],
-    security: 'is_granted("ROLE_USER")',
-    parameters: [
-        'name' => new QueryParameter(filter: new PartialSearchFilter()),
-        'email' => new QueryParameter(filter: new PartialSearchFilter()),
-        'address.city.name' => new QueryParameter(filter: new ExactFilter(), property: 'address.city.name'),
-        'order[:property]' => new QueryParameter(filter: new SortFilter(), properties: ['name']),
-    ],
-)]
-#[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
 class Customer
 {
     #[ORM\Id]
@@ -54,27 +19,22 @@ class Customer
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['customer:read', 'customer:write'])]
     #[Assert\NotBlank]
     private string $name;
 
     #[ORM\Column(type: 'string', length: 255, unique: true)]
-    #[Groups(['customer:read', 'customer:write'])]
     #[Assert\NotBlank]
     #[Assert\Email]
     private string $email;
 
     #[ORM\Column(length: 20)]
-    #[Groups(['customer:read', 'customer:write'])]
     #[Assert\NotBlank]
     private string $phone;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    #[Groups(['customer:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    #[Groups(['customer:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
@@ -88,7 +48,6 @@ class Customer
         orphanRemoval: true
     )]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['customer:read', 'customer:write', 'address:write'])]
     #[Assert\Valid]
     private Collection $address;
 
