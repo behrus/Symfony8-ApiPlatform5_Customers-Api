@@ -150,7 +150,6 @@
         },
         "files": [
             ".editorconfig",
-            "AGENTS.md",
             "config/packages/cache.yaml",
             "config/packages/framework.yaml",
             "config/preload.php",

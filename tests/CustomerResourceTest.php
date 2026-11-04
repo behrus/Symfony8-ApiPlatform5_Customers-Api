@@ -13,6 +13,7 @@ use App\Entity\Customer;
 use App\Tests\Support\FindsFixtureIds;
 use Doctrine\ORM\EntityManagerInterface;
 use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -227,6 +228,54 @@ class CustomerResourceTest extends ApiTestCase
             'message' => 'An address without a customer cannot be created',
         ]]]);
         $this->assertSame($addresses, $this->entityManager->getRepository(Address::class)->count([]));
+    }
+
+    public function testCreateAddressWithoutCityIsRejected(): void
+    {
+        $addresses = $this->entityManager->getRepository(Address::class)->count([]);
+        $data = $this->addressData('Ohne City', $this->idOf(City::class, 'Berlin'));
+        unset($data['city']);
+
+        $this->client->request('POST', '/api/addresses', [
+            'headers' => $this->headers() + ['Content-Type' => 'application/ld+json'],
+            'json' => $data + ['customer' => '/api/customers/'.$this->idOf(Customer::class, 'Dora Müller')],
+        ]);
+
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertJsonContains(['violations' => [[
+            'propertyPath' => 'city',
+            'message' => 'An address without a city cannot be created',
+        ]]]);
+        $this->assertSame($addresses, $this->entityManager->getRepository(Address::class)->count([]));
+    }
+
+    #[DataProvider('invalidZipcodes')]
+    public function testCreateAddressWithInvalidZipcodeIsRejected(string $zipcode): void
+    {
+        $this->client->request('POST', '/api/addresses', [
+            'headers' => $this->headers() + ['Content-Type' => 'application/ld+json'],
+            'json' => ['zipcode' => $zipcode, 'customer' => '/api/customers/'.$this->idOf(Customer::class, 'Dora Müller')]
+                + $this->addressData('Hauptstraße', $this->idOf(City::class, 'Berlin')),
+        ]);
+
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertJsonContains(['violations' => [[
+            'propertyPath' => 'zipcode',
+            'message' => 'Postal code must have exactly 5 digits',
+        ]]]);
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function invalidZipcodes(): array
+    {
+        return [
+            'too short' => ['1234'],
+            'too long' => ['123456'],
+            'letters' => ['abcde'],
+            'with a space' => ['10 15'],
+        ];
     }
 
     public function testAddressListShowsTheCustomerAsLink(): void

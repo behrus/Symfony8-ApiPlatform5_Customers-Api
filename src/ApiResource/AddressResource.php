@@ -64,6 +64,7 @@ final class AddressResource
 
     #[Groups(['address:read', 'address:write', 'customer:read', 'customer:write'])]
     #[Assert\NotBlank]
+    #[Assert\Regex('/^\d{5}$/', message: 'Postal code must have exactly 5 digits')]
     public string $zipcode = '';
 
     #[Groups(['address:read'])]
@@ -81,6 +82,7 @@ final class AddressResource
     public ?CustomerResource $customer = null;
 
     #[Groups(['address:read', 'address:write', 'customer:read', 'customer:write'])]
+    #[Assert\NotNull(message: 'An address without a city cannot be created')]
     #[Map(if: new IsNotNull())]
     public ?City $city = null;
 }
