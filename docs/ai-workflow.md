@@ -28,4 +28,4 @@ The assistant's first attempt was wrong several times, and the checks caught it:
 
 ## Decisions stay with the developer
 
-Examples: no cascade delete, no hard delete of customers, tokens in plain text as a known limitation, a README that lists the limitations. The assistant names doubtful decisions briefly and precisely; the developer decides.
+Examples: no cascade delete, no hard delete of customers, plain text tokens (first listed as a known limitation, then replaced by hashes on the developer's call), a README that lists the limitations. The assistant names doubtful decisions briefly and precisely; the developer decides.

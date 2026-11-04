@@ -29,11 +29,12 @@ The `worker` service runs `php bin/console messenger:consume async` and handles 
 From the token to the Messenger result, step by step:
 
 1. Open http://localhost:8080/api (Swagger UI).
-2. Click **Authorize**, enter the demo token of the admin user `admin@example.com` and confirm:
+2. Click **Authorize**, enter one of the two demo tokens and confirm. Use the admin token first; the user token shows what the voter does in step 7.
 
-   ```
-   9a1f0c5e7b3d4826a0e1c7f35d8b2a64e91c0d7f3b5a8e2146c9d0f7a3b5e8c1d2f4a6b8c0e2d4f6a8b0c2e4d6f8a0b2c4e6d8f0a2b4c6e8d0f2a4b6c8e0d2f4
-   ```
+   | Demo user | Role | Token |
+   | --- | --- | --- |
+   | `admin@example.com` | `ROLE_ADMIN` | `9a1f0c5e7b3d4826a0e1c7f35d8b2a64e91c0d7f3b5a8e2146c9d0f7a3b5e8c1d2f4a6b8c0e2d4f6a8b0c2e4d6f8a0b2c4e6d8f0a2b4c6e8d0f2a4b6c8e0d2f4` |
+   | `test@example.com` | `ROLE_USER` | `12f3600378cbb476613d4cec52b56730bc0bcf77d5925538eeffd8dde2d3c4d71e8bb741f0b8cd6f090c328a7535340bf0e7121786566f1f60501d29` |
 
 3. Open `GET /api/customers`, click **Try it out** and **Execute**. The demo customers are listed. Without a token the API answers `401`.
 4. Open `POST /api/customers`, click **Try it out**, use this body and click **Execute** (`201`):
@@ -49,6 +50,7 @@ From the token to the Messenger result, step by step:
    ```
 
 6. Optional: the queue `messages` in the RabbitMQ UI (http://localhost:15672, `guest` / `guest`) shows the messages. The worker takes them within milliseconds, so the queue is mostly empty.
+7. Voter: click **Authorize**, **Logout**, and enter the user token. `DELETE /api/customers/{id}` now answers `403`. With the admin token it answers `204` (a soft delete, see [Behaviour of the endpoints](#behaviour-of-the-endpoints)).
 
 The same with `curl`:
 
@@ -56,7 +58,7 @@ The same with `curl`:
 curl -H "x-api-key: 9a1f0c5e7b3d4826a0e1c7f35d8b2a64e91c0d7f3b5a8e2146c9d0f7a3b5e8c1d2f4a6b8c0e2d4f6a8b0c2e4d6f8a0b2c4e6d8f0a2b4c6e8d0f2a4b6c8e0d2f4" -H "Accept: application/ld+json" http://localhost:8080/api/customers
 ```
 
-The demo tokens come from `src/DataFixtures/UserFixtures.php` and are public. Use them only on a local machine. Further tokens are created with `docker compose exec web php bin/console app:api-token:create <email>` (the token is printed once). The password column is not used (authentication is token-only); `!` is not a valid hash, so no password can match it.
+The demo tokens come from `src/DataFixtures/UserFixtures.php` and are public. Use them only on a local machine. If a token stops working (for example after it was deleted through `DELETE /api/api_tokens/{id}`), run `docker compose up -d`: the demo data and both tokens are loaded again. Further tokens are created with `docker compose exec web php bin/console app:api-token:create <email>`; the token is printed once, only its SHA-256 hash is stored. The password column is not used (authentication is token-only); `!` is not a valid hash, so no password can match it.
 
 ### Docker notes
 
@@ -83,12 +85,13 @@ Headers for a REST client:
 | City | `/api/cities` | list, get, post, put, patch, delete | `ROLE_USER` |
 | Country | `/api/countries` | list, get, post, put, patch, delete | `ROLE_USER` |
 | User | `/api/users` | list, get, post, patch, delete | `ROLE_ADMIN` |
-| ApiToken | `/api/api_tokens` | list, get, post, patch, delete | `ROLE_ADMIN` |
+| ApiToken | `/api/api_tokens` | list, get, delete (never shows a token or hash) | `ROLE_ADMIN` |
 
 Every user also has `ROLE_USER`. The voter (`src/Security/Voter/CustomerVoter.php`) keeps the delete rule in one place instead of in the entity.
 
 ## Behaviour of the endpoints
 
+- **Customer and Address are DTO resources** (`src/ApiResource`); the Doctrine entities only store data. `symfony/object-mapper` maps between them, and API Platform's Doctrine providers still read the entities, so the filters and the soft-delete query extension apply as before.
 - **Customers** can be filtered and ordered: `?name=`, `?email=` (partial, case-insensitive), `?address.city.name=` (exact) and `?order[name]=asc|desc`.
 - **Deleting a customer is a soft delete.** `DELETE` sets `deletedAt`; the row and its addresses stay for traceability. Deleted customers are not listed and answer `404`. The email of a deleted customer stays taken.
 - **Deleting a country or city that still has children is refused** with `409 Conflict`; nothing is removed.
@@ -139,8 +142,9 @@ docker compose exec web php bin/console doctrine:schema:validate         # entit
 
 ## Known limitations
 
-- **No login and no registration.** An admin creates users, and tokens are created on the server with `app:api-token:create`.
-- **Tokens are stored in plain text** in `api_token`. Storing hashes would change the authenticator and the fixtures.
+- **No login and no registration.** An admin creates users, and tokens are created on the server with `app:api-token:create`. The two demo tokens are public (local use only).
+- **Tokens do not expire.** They are stored as SHA-256 hashes and shown once; an admin revokes a token with `DELETE /api/api_tokens/{id}`.
+- **Addresses inside `POST` or `PUT /api/customers` are ignored** (no error). Create addresses with `POST /api/addresses`.
 - **No anonymisation yet.** The email of a soft-deleted customer cannot be used again, and `/api/addresses` still shows the addresses of a deleted customer.
 - **Messenger has no failure transport.** A message that keeps failing is dropped after the retries.
 - **Request logging (dev only).** `LogRequestAndResponseEventListener` writes all request headers (including `x-api-key`) and the full response body to `var/log/request/` (kept for 90 days). Do not use it with real data.
