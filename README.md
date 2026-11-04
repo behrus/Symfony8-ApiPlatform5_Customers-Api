@@ -11,7 +11,7 @@ A prototype REST API for managing customer contacts, built with Symfony 8.1, API
 - **Messenger with RabbitMQ and a worker:** `POST /api/customers` sends a `CustomerCreated` message that a separate worker handles
 - Soft delete, hashed API tokens, tests and CI
 
-**Scope:** This is a backend API only. There is no frontend, no login and no registration. Authentication is a token in the `x-api-key` header: an admin creates a token (`app:api-token:create`), and the two demo tokens make it easy to try locally (see [First request](#first-request)). Tokens are stored as hashes and do not expire.
+**Scope:** This is a backend API only. There is no frontend, no login and no registration. Authentication is a token in the `x-api-key` header: an admin creates a token (`app:api-token:create`), and the two demo tokens make it easy to try locally (see [First request](#first-request)). Tokens are stored as hashes and do not expire. The API is for Germany only: postal codes have 5 digits and every city belongs to Germany.
 
 ## Quick start (Docker)
 
