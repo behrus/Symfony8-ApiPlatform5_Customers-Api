@@ -52,8 +52,7 @@ From the token to the Messenger result, step by step:
    {"name": "Jane Doe", "email": "jane@example.com", "phone": "0301234567"}
    ```
 
-   Swagger pre-fills the body with an example; replace all of it with the line above. Leave the query parameters empty (they belong to `GET`).
-
+   Swagger pre-fills the body with an example; replace all of it with the line above.
    ![Swagger UI: POST /api/customers answers 201](docs/img/post-customer.png)
 
 5. The API has saved the customer and put a `CustomerCreated` message into RabbitMQ. The `worker` takes it and the handler writes a log line:
@@ -159,7 +158,7 @@ docker compose exec web php bin/console doctrine:schema:validate         # entit
 
 - **No login and no registration.** An admin creates users, and tokens are created on the server with `app:api-token:create`. The two demo tokens are public (local use only).
 - **Tokens do not expire.** They are stored as SHA-256 hashes and shown once; an admin revokes a token with `DELETE /api/api_tokens/{id}`.
-- **Addresses inside `POST` or `PUT /api/customers` are ignored** (no error). Create addresses with `POST /api/addresses`.
+- **Addresses inside `POST` or `PUT /api/customers` are ignored** (no error, and they are not part of the request schema in Swagger). Create addresses with `POST /api/addresses`.
 - **No anonymisation yet.** The email of a soft-deleted customer cannot be used again, and `/api/addresses` still shows the addresses of a deleted customer.
 - **Messenger has no failure transport.** A message that keeps failing is dropped after the retries.
 - **Request logging (dev only).** `LogRequestAndResponseEventListener` writes all request headers (including `x-api-key`) and the full response body to `var/log/request/` (kept for 90 days). Do not use it with real data.

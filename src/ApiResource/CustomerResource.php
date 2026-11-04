@@ -33,21 +33,20 @@ use Symfony\Component\Validator\Constraints as Assert;
     shortName: 'Customer',
     operations: [
         new Get(),
-        new GetCollection(),
+        new GetCollection(parameters: [
+            'name' => new QueryParameter(filter: new PartialSearchFilter()),
+            'email' => new QueryParameter(filter: new PartialSearchFilter()),
+            'address.city.name' => new QueryParameter(filter: new ExactFilter(), property: 'address.city.name'),
+            'order[:property]' => new QueryParameter(filter: new SortFilter(), properties: ['name']),
+        ]),
         new Post(processor: CustomerCreatedProcessor::class),
         new Put(),
         new Patch(),
         new Delete(security: 'is_granted("CUSTOMER_DELETE", object)', processor: SoftDeleteProcessor::class),
     ],
     normalizationContext: ['groups' => ['customer:read']],
-    denormalizationContext: ['groups' => ['customer:write', 'address:write']],
+    denormalizationContext: ['groups' => ['customer:write']],
     security: 'is_granted("ROLE_USER")',
-    parameters: [
-        'name' => new QueryParameter(filter: new PartialSearchFilter()),
-        'email' => new QueryParameter(filter: new PartialSearchFilter()),
-        'address.city.name' => new QueryParameter(filter: new ExactFilter(), property: 'address.city.name'),
-        'order[:property]' => new QueryParameter(filter: new SortFilter(), properties: ['name']),
-    ],
     stateOptions: new Options(entityClass: Customer::class),
 )]
 #[Map(source: Customer::class)]
@@ -80,7 +79,7 @@ final class CustomerResource
     public ?\DateTimeImmutable $updatedAt = null;
 
     /** @var list<AddressResource> */
-    #[Groups(['customer:read', 'customer:write', 'address:write'])]
+    #[Groups(['customer:read'])]
     #[Assert\Valid]
     #[Map(if: new SourceClass(CustomerResource::class), transform: new MapCollection(targetClass: Address::class))]
     #[Map(if: new SourceClass(Customer::class), transform: new MapCollection(targetClass: AddressResource::class))]
