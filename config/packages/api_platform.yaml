@@ -15,6 +15,12 @@ api_platform:
             vary: ['Content-Type', 'Authorization', 'Origin']
         extra_properties:
             standard_put: false
+    swagger:
+        # Adds the "Authorize" field to Swagger UI: the token is sent as the x-api-key header.
+        api_keys:
+            apiKey:
+                name: x-api-key
+                type: header
     serializer:
         # API Platform 4 turns the "hydra:" prefix off by default; keep it for existing clients.
         hydra_prefix: true

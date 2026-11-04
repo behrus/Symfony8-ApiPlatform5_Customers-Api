@@ -12,11 +12,9 @@ PHP 8.4 with FrankenPHP, MySQL 8.0.36 and RabbitMQ 4. Project name `cca`.
 
 ```bash
 docker compose up -d --build
-docker compose exec web composer install
-docker compose exec web php bin/console doctrine:migrations:migrate -n
-docker compose exec web php bin/console --env=test doctrine:database:create
-docker compose exec web php bin/console --env=test doctrine:migrations:migrate -n
 ```
+
+The one-off service `init` installs the Composer dependencies, migrates the dev database and loads the demo data (users, countries, cities, customers). It runs on **every** `docker compose up`, and loading the demo data **replaces all rows** of the dev database. The first start takes a while because of `composer install`.
 
 | Service | Address |
 | --- | --- |
@@ -28,15 +26,37 @@ The `worker` service runs `php bin/console messenger:consume async` and handles 
 
 ### First request
 
-There is no login (see [Known limitations](#known-limitations)). The first admin user is created in the database, then a token is created for it with a console command:
+From the token to the Messenger result, step by step:
+
+1. Open http://localhost:8080/api (Swagger UI).
+2. Click **Authorize**, enter the demo token of the admin user `admin@example.com` and confirm:
+
+   ```
+   9a1f0c5e7b3d4826a0e1c7f35d8b2a64e91c0d7f3b5a8e2146c9d0f7a3b5e8c1d2f4a6b8c0e2d4f6a8b0c2e4d6f8a0b2c4e6d8f0a2b4c6e8d0f2a4b6c8e0d2f4
+   ```
+
+3. Open `GET /api/customers`, click **Try it out** and **Execute**. The demo customers are listed. Without a token the API answers `401`.
+4. Open `POST /api/customers`, click **Try it out**, use this body and click **Execute** (`201`):
+
+   ```json
+   {"name": "Jane Doe", "email": "jane@example.com", "phone": "0301234567"}
+   ```
+
+5. The API has saved the customer and put a `CustomerCreated` message into RabbitMQ. The `worker` takes it and the handler writes a log line:
+
+   ```bash
+   docker compose logs -f worker
+   ```
+
+6. Optional: the queue `messages` in the RabbitMQ UI (http://localhost:15672, `guest` / `guest`) shows the messages. The worker takes them within milliseconds, so the queue is mostly empty.
+
+The same with `curl`:
 
 ```bash
-docker compose exec web php bin/console dbal:run-sql "INSERT INTO user (email, roles, password) VALUES ('admin@example.com', '[\"ROLE_ADMIN\"]', '!')"
-docker compose exec web php bin/console app:api-token:create admin@example.com
-curl -H "x-api-key: <token>" -H "Accept: application/ld+json" http://localhost:8080/api/customers
+curl -H "x-api-key: 9a1f0c5e7b3d4826a0e1c7f35d8b2a64e91c0d7f3b5a8e2146c9d0f7a3b5e8c1d2f4a6b8c0e2d4f6a8b0c2e4d6f8a0b2c4e6d8f0a2b4c6e8d0f2a4b6c8e0d2f4" -H "Accept: application/ld+json" http://localhost:8080/api/customers
 ```
 
-The password column is not used (authentication is token-only); `!` is not a valid hash, so no password can match it. The token is stored in the `api_token` table and printed once.
+The demo tokens come from `src/DataFixtures/UserFixtures.php` and are public. Use them only on a local machine. Further tokens are created with `docker compose exec web php bin/console app:api-token:create <email>` (the token is printed once). The password column is not used (authentication is token-only); `!` is not a valid hash, so no password can match it.
 
 ### Docker notes
 
@@ -104,6 +124,8 @@ flowchart TB
 ## Tests and quality
 
 ```bash
+docker compose exec web php bin/console --env=test doctrine:database:create       # once
+docker compose exec web php bin/console --env=test doctrine:migrations:migrate -n # test database
 docker compose exec web php bin/phpunit                                  # all tests
 docker compose exec web php bin/phpunit tests/CityTest.php               # one file
 docker compose exec web vendor/bin/phpstan analyse --memory-limit=1G     # level 6
