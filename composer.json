@@ -1,6 +1,6 @@
 {
     "type": "project",
-    "license": "PolyForm-Noncommercial-1.0.0",
+    "license": "MIT",
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {

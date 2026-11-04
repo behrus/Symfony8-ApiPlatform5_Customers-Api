@@ -158,6 +158,6 @@ docker compose exec web php bin/console doctrine:schema:validate         # entit
 
 ## License
 
-The code of this repository is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE). In short: you may use it for noncommercial purposes; for commercial use you need a separate license from the author. The full text in `LICENSE` is the only binding version.
+The code of this repository is licensed under the [MIT License](LICENSE).
 
 The third-party packages installed with Composer (not part of this repository) keep their own licenses. At the time of writing these are MIT (for example Symfony, Copyright (c) Fabien Potencier) and BSD-3-Clause.
