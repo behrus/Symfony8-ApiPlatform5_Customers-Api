@@ -4,7 +4,14 @@ A prototype REST API for managing customer contacts, built with Symfony 8.1, API
 
 **History:** The project started in April 2024 as a Symfony 7.0 / API Platform 3 / PHP 8.3 implementation. In 2026 it was upgraded step by step to the current stack, together with Claude Code (Sonnet). The upgrade added Docker, a CI pipeline, voters and an asynchronous Messenger flow with RabbitMQ.
 
-**Why it exists:** It is a practice project for upgrading a real API without losing test coverage, and for working with an AI assistant in small, reviewable steps (see `docs/ai-workflow.md`).
+**Why it exists:** It is a practice project for upgrading a real API without losing test coverage, and for working with an AI assistant in small, reviewable steps (see `docs/ai-workflow.md`). Along the way it became a small showcase for:
+
+- **Voters:** one rule for who may delete a customer
+- **DTO resources:** the API is separate from the Doctrine entities
+- **Messenger with RabbitMQ and a worker:** `POST /api/customers` sends a `CustomerCreated` message that a separate worker handles
+- Soft delete, hashed API tokens, tests and CI
+
+**Scope:** This is a backend API only. There is no frontend, no login and no registration. Authentication is a token in the `x-api-key` header: an admin creates a token (`app:api-token:create`), and the two demo tokens make it easy to try locally (see [First request](#first-request)). Tokens are stored as hashes and do not expire.
 
 ## Quick start (Docker)
 
