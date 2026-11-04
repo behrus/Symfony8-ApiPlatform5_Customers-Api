@@ -56,7 +56,7 @@ From the token to the Messenger result, step by step:
    docker compose logs -f worker
    ```
 
-6. Optional: the queue `messages` in the RabbitMQ UI (http://localhost:15672, `guest` / `guest`) shows the messages. The worker takes them within milliseconds, so the queue is mostly empty.
+6. Optional: the queue `messages` in the RabbitMQ UI (http://localhost:15672, `guest` / `guest`) shows the messages. The worker takes them within milliseconds, so the queue is mostly empty. To see a message in the queue, stop the worker first (`docker compose stop worker`), send the `POST`, and look at the queue; `docker compose start worker` processes it.
 7. Voter: click **Authorize**, **Logout**, and enter the user token. `DELETE /api/customers/{id}` now answers `403`. With the admin token it answers `204` (a soft delete, see [Behaviour of the endpoints](#behaviour-of-the-endpoints)).
 
 The same with `curl`:
