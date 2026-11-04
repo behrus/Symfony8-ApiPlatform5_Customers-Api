@@ -43,6 +43,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     denormalizationContext: [
         'groups' => ['address:write', 'customer:write'],
     ],
+    validationContext: ['groups' => ['Default', 'address:standalone']],
     security: 'is_granted("ROLE_USER")',
     stateOptions: new Options(entityClass: Address::class),
 )]
@@ -73,7 +74,9 @@ final class AddressResource
     #[Map(if: new SourceClass(Address::class))]
     public ?\DateTimeImmutable $updatedAt = null;
 
-    #[Groups(['address:read', 'address:write', 'customer:read', 'customer:write'])]
+    // Only checked on /api/addresses: inside POST /api/customers the customer is the one being created.
+    #[Groups(['address:read', 'address:write', 'customer:read'])]
+    #[Assert\NotNull(message: 'Adresse ohne Customer kann nicht eingetragen werden', groups: ['address:standalone'])]
     #[Map(if: new IsNotNull())]
     public ?CustomerResource $customer = null;
 

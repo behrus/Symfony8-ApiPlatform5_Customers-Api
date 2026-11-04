@@ -17,6 +17,7 @@ use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\QueryParameter;
 use App\Entity\Address;
 use App\Entity\Customer;
+use App\ObjectMapper\CustomerIsNew;
 use App\State\CustomerCreatedProcessor;
 use App\State\SoftDeleteProcessor;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -39,7 +40,10 @@ use Symfony\Component\Validator\Constraints as Assert;
             'address.city.name' => new QueryParameter(filter: new ExactFilter(), property: 'address.city.name'),
             'order[:property]' => new QueryParameter(filter: new SortFilter(), properties: ['name']),
         ]),
-        new Post(processor: CustomerCreatedProcessor::class),
+        new Post(
+            denormalizationContext: ['groups' => ['customer:write', 'customer:create']],
+            processor: CustomerCreatedProcessor::class,
+        ),
         new Put(),
         new Patch(),
         new Delete(security: 'is_granted("CUSTOMER_DELETE", object)', processor: SoftDeleteProcessor::class),
@@ -79,9 +83,9 @@ final class CustomerResource
     public ?\DateTimeImmutable $updatedAt = null;
 
     /** @var list<AddressResource> */
-    #[Groups(['customer:read'])]
+    #[Groups(['customer:read', 'customer:create'])]
     #[Assert\Valid]
-    #[Map(if: new SourceClass(CustomerResource::class), transform: new MapCollection(targetClass: Address::class))]
+    #[Map(if: new CustomerIsNew(), transform: new MapCollection(targetClass: Address::class))]
     #[Map(if: new SourceClass(Customer::class), transform: new MapCollection(targetClass: AddressResource::class))]
     public array $address = [];
 }

@@ -142,6 +142,19 @@ class Customer
         return $this->address;
     }
 
+    /**
+     * Only adds. Its existence makes "address" writable for the property accessor (the inflector turns
+     * "address" into "addres", so it finds no adder); it never removes, so it cannot delete addresses.
+     *
+     * @param iterable<Address> $addresses
+     */
+    public function setAddress(iterable $addresses): void
+    {
+        foreach ($addresses as $address) {
+            $this->addAddress($address);
+        }
+    }
+
     public function addAddress(Address $address): static
     {
         if (!$this->address->contains($address)) {
