@@ -87,7 +87,7 @@ class UserTest extends ApiTestCase
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
 
         return [
-            'x-api-key' => $user->getApiTokens()->first()->getToken(),
+            'x-api-key' => UserFixtures::tokenFor($user->getEmail()),
             'Accept' => 'application/ld+json',
             'Content-Type' => 'application/ld+json',
         ];

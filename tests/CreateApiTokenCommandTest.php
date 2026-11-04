@@ -41,8 +41,9 @@ class CreateApiTokenCommandTest extends ApiTestCase
         $token = trim($this->commandTester->getDisplay());
         $this->assertSame(120, strlen($token));
 
-        $apiToken = $this->entityManager->getRepository(ApiToken::class)->findOneBy(['token' => $token]);
+        $apiToken = $this->entityManager->getRepository(ApiToken::class)->findOneBy(['tokenHash' => ApiToken::hash($token)]);
         $this->assertNotNull($apiToken);
+        $this->assertNotSame($token, $apiToken->getTokenHash());
         $this->assertSame('test@example.com', $apiToken->getUser()->getEmail());
     }
 

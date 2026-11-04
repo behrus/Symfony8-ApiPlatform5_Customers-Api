@@ -79,7 +79,7 @@ class DeleteRestrictTest extends ApiTestCase
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => 'test@example.com']);
 
         return [
-            'x-api-key' => $user->getApiTokens()->first()->getToken(),
+            'x-api-key' => UserFixtures::tokenFor($user->getEmail()),
             'Accept' => 'application/ld+json',
         ];
     }

@@ -119,6 +119,6 @@ class CustomerFilterTest extends ApiTestCase
         $userRepository = $this->entityManager->getRepository(User::class);
         $user = $userRepository->findOneBy(['email' => 'test@example.com']);
 
-        return $user->getApiTokens()->first()->getToken();
+        return UserFixtures::tokenFor($user->getEmail());
     }
 }

@@ -30,14 +30,15 @@ class CreateApiTokenCommand
             return Command::FAILURE;
         }
 
+        $token = bin2hex(random_bytes(60));
         $apiToken = new ApiToken();
-        $apiToken->setToken(bin2hex(random_bytes(60)));
+        $apiToken->setTokenHash(ApiToken::hash($token));
         $user->addApiToken($apiToken);
 
         $this->entityManager->persist($apiToken);
         $this->entityManager->flush();
 
-        $io->writeln($apiToken->getToken());
+        $io->writeln($token);
 
         return Command::SUCCESS;
     }

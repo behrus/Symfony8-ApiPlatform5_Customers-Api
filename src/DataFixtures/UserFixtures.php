@@ -10,9 +10,21 @@ use Doctrine\Persistence\ObjectManager;
 
 class UserFixtures extends Fixture implements OrderedFixtureInterface
 {
-    private const API_TOKEN = '12f3600378cbb476613d4cec52b56730bc0bcf77d5925538eeffd8dde2d3c4d71e8bb741f0b8cd6f090c328a7535340bf0e7121786566f1f60501d29';
+    public const API_TOKEN = '12f3600378cbb476613d4cec52b56730bc0bcf77d5925538eeffd8dde2d3c4d71e8bb741f0b8cd6f090c328a7535340bf0e7121786566f1f60501d29';
 
-    private const ADMIN_API_TOKEN = '9a1f0c5e7b3d4826a0e1c7f35d8b2a64e91c0d7f3b5a8e2146c9d0f7a3b5e8c1d2f4a6b8c0e2d4f6a8b0c2e4d6f8a0b2c4e6d8f0a2b4c6e8d0f2a4b6c8e0d2f4';
+    public const ADMIN_API_TOKEN = '9a1f0c5e7b3d4826a0e1c7f35d8b2a64e91c0d7f3b5a8e2146c9d0f7a3b5e8c1d2f4a6b8c0e2d4f6a8b0c2e4d6f8a0b2c4e6d8f0a2b4c6e8d0f2a4b6c8e0d2f4';
+
+    /**
+     * Plain text of the demo token of a fixture user (the database only holds its hash).
+     */
+    public static function tokenFor(string $email): string
+    {
+        return match ($email) {
+            'test@example.com' => self::API_TOKEN,
+            'admin@example.com' => self::ADMIN_API_TOKEN,
+            default => throw new \InvalidArgumentException(sprintf('No demo token for "%s".', $email)),
+        };
+    }
 
     public function load(ObjectManager $manager): void
     {
@@ -36,7 +48,7 @@ class UserFixtures extends Fixture implements OrderedFixtureInterface
     private function createApiToken(User $user, string $token): ApiToken
     {
         $apiToken = new ApiToken();
-        $apiToken->setToken($token);
+        $apiToken->setTokenHash(ApiToken::hash($token));
         $apiToken->setUser($user);
 
         return $apiToken;

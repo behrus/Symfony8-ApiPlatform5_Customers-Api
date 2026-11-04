@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\ApiToken;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -29,7 +30,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 
     public function findByApiToken(string $apiToken): ?User
     {
-        return $this->apiTokenRepository->findOneBy(['token' => $apiToken])?->getUser();
+        return $this->apiTokenRepository->findOneBy(['tokenHash' => ApiToken::hash($apiToken)])?->getUser();
     }
 
     /**
