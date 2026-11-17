@@ -10,7 +10,7 @@ The 2026 upgrade of this project (Symfony 7.0 to 8.1, API Platform 3 to 5, plus 
 - **Checks after every change:** PHPUnit, PHPStan and PHP CS Fixer. A deprecation triggered by the project fails the test run (`failOnDeprecation` in `phpunit.xml.dist`), so deprecations are fixed, not ignored.
 - **Tests are agreed before they are written:** which kind (unit, kernel, functional), which cases, and why.
 - **The assistant never commits or pushes.** `.claude/settings.json` denies `git commit*` and `git push*`. The assistant suggests a commit message; the developer reviews the diff and commits.
-- **Commit messages** from the assistant end with a `Co-Authored-By: Claude Sonnet 5.5` line.
+- **Commit messages** up to 17.11.2026 end with a `Co-Authored-By: Claude Sonnet 5.5` line. Later commits do not; the AI involvement is documented in this page and in the README.
 - **No secrets in committed files.** Reading `.env.local` is denied in `.claude/settings.json`. Local, private notes stay in `CLAUDE.local.md`, which is git-ignored.
 
 Project facts for the assistant (commands, architecture, decisions) are in `CLAUDE.md`.
@@ -21,6 +21,8 @@ Project facts for the assistant (commands, architecture, decisions) are in `CLAU
 - **Deleting a country or city.** First a test pinned the old behaviour (deleting a country removed its cities and addresses). Then the cascade was removed on purpose. A test then showed that API Platform answers `500` with the raw SQL message, so a small processor turned the foreign key error into `409`. Finally the developer decided that countries and cities are never deleted, and the processor was removed with the `DELETE` operation.
 - **Soft delete for customers.** Gedmo `SoftDeleteable` was tried first in a throwaway script (it works with ORM 3). The decision for a small own `deletedAt` field and processor was made by the developer, to avoid a package for one feature.
 - **Slow tests.** Reading the Liip source showed that every fixture load dropped and rebuilt the schema from the entities. The tests never ran against the migrations, and the suite took about two minutes. With `keep_database_and_schema` and tests that do not depend on fixed ids, it takes about ten seconds and `schema:validate` runs in CI.
+
+- **Failure transport for Messenger.** A message that kept failing was dropped after the retries. A Doctrine transport `failed` now stores it (migration for the table `messenger_messages`), and a test dispatches `WorkerMessageFailedEvent` by hand: a message with retries left goes back to `async`, after 3 retries it lands in the table. The first version used `in-memory://` for `failed` in the test environment; `doctrine:schema:validate` then failed in CI, because Doctrine did not know the table. The fix keeps `failed` a Doctrine transport in `test`.
 
 ## What went wrong on the way
 
