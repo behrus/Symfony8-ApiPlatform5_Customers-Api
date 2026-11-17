@@ -3,8 +3,10 @@
 namespace App\Tests;
 
 use App\Message\CustomerCreated;
+use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Messenger\Bridge\Doctrine\Transport\DoctrineTransport;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Event\WorkerMessageFailedEvent;
 use Symfony\Component\Messenger\Stamp\RedeliveryStamp;
@@ -14,12 +16,13 @@ use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
 /**
  * Simulates what the worker does when a handler throws: it dispatches WorkerMessageFailedEvent.
  * The default retry strategy allows 3 retries (framework.messenger.transports.*.retry_strategy.max_retries).
+ * "async" is an in-memory transport in test; "failed" is the real Doctrine transport (table messenger_messages).
  */
 class MessengerFailureTransportTest extends KernelTestCase
 {
     private EventDispatcherInterface $eventDispatcher;
     private InMemoryTransport $asyncTransport;
-    private InMemoryTransport $failedTransport;
+    private DoctrineTransport $failedTransport;
 
     protected function setUp(): void
     {
@@ -28,6 +31,13 @@ class MessengerFailureTransportTest extends KernelTestCase
         $this->eventDispatcher = $container->get('event_dispatcher');
         $this->asyncTransport = $container->get('messenger.transport.async');
         $this->failedTransport = $container->get('messenger.transport.failed');
+        $container->get(Connection::class)->executeStatement('DELETE FROM messenger_messages');
+    }
+
+    protected function tearDown(): void
+    {
+        static::getContainer()->get(Connection::class)->executeStatement('DELETE FROM messenger_messages');
+        parent::tearDown();
     }
 
     public function testMessageWithRetriesLeftGoesBackToAsyncTransport(): void
@@ -35,7 +45,7 @@ class MessengerFailureTransportTest extends KernelTestCase
         $this->failHandling(new Envelope(new CustomerCreated(1), [new RedeliveryStamp(0)]));
 
         $this->assertCount(1, $this->asyncTransport->getSent());
-        $this->assertCount(0, $this->failedTransport->getSent());
+        $this->assertSame(0, $this->failedTransport->getMessageCount());
     }
 
     public function testMessageWithoutRetriesLeftIsStoredInFailureTransport(): void
@@ -43,10 +53,11 @@ class MessengerFailureTransportTest extends KernelTestCase
         $this->failHandling(new Envelope(new CustomerCreated(1), [new RedeliveryStamp(3)]));
 
         $this->assertCount(0, $this->asyncTransport->getSent());
-        $this->assertCount(1, $this->failedTransport->getSent());
+        $this->assertSame(1, $this->failedTransport->getMessageCount());
 
-        $envelope = $this->failedTransport->getSent()[0];
+        $envelope = iterator_to_array($this->failedTransport->all())[0];
         $this->assertInstanceOf(CustomerCreated::class, $envelope->getMessage());
+        $this->assertSame(1, $envelope->getMessage()->customerId);
         $this->assertSame('async', $envelope->last(SentToFailureTransportStamp::class)->getOriginalReceiverName());
     }
 

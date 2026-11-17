@@ -17,4 +17,6 @@ when@test:
             transports:
                 # Messages stay in memory; tests check them with the "messenger.transport.async" service.
                 async: 'in-memory://'
-                failed: 'in-memory://'
+                # Stays a Doctrine transport: with in-memory Doctrine would not know the table messenger_messages
+                # and "doctrine:schema:validate" would fail in the test environment.
+                failed: 'doctrine://default?queue_name=failed&auto_setup=0'
