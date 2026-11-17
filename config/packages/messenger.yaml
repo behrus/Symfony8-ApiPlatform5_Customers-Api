@@ -1,8 +1,13 @@
 framework:
     messenger:
+        # A message that still fails after all retries is stored here (see "messenger:failed:show").
+        failure_transport: failed
+
         transports:
             # https://symfony.com/doc/current/messenger.html#transport-configuration
             async: '%env(MESSENGER_TRANSPORT_DSN)%'
+            # The table is created by a migration, not by auto_setup.
+            failed: 'doctrine://default?queue_name=failed&auto_setup=0'
 
         # Messages are routed to a transport with the #[AsMessage] attribute on the message class.
 
@@ -12,3 +17,4 @@ when@test:
             transports:
                 # Messages stay in memory; tests check them with the "messenger.transport.async" service.
                 async: 'in-memory://'
+                failed: 'in-memory://'
