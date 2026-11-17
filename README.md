@@ -139,6 +139,7 @@ flowchart TB
 - The message is routed with `#[AsMessage('async')]` on the class; the transport `async` is defined in `config/packages/messenger.yaml` and uses `MESSENGER_TRANSPORT_DSN`.
 - `src/State/CustomerCreatedProcessor.php` wraps API Platform's persist processor and dispatches the message only after the customer is saved.
 - In the `test` environment the transport is `in-memory://`, so tests and CI need no RabbitMQ (the `amqp` PHP extension is still required by `symfony/amqp-messenger`).
+- A message that still fails after the retries (default 3) is stored in the failure transport `failed` (table `messenger_messages`, created by a migration). Look at it with `messenger:failed:show` and send it again by hand with `messenger:failed:retry` after fixing the cause; there is no automatic retry on purpose. In the `test` environment `failed` stays a Doctrine transport, because with `in-memory://` Doctrine would not know the table and `doctrine:schema:validate` would fail.
 
 ## Tests and quality
 
@@ -162,7 +163,7 @@ docker compose exec web php bin/console doctrine:schema:validate         # entit
 - **Tokens do not expire.** They are stored as SHA-256 hashes and shown once; an admin revokes a token with `DELETE /api/api_tokens/{id}`.
 - **Addresses inside `PUT` or `PATCH /api/customers` are ignored** (no error, and they are not part of the request schema in Swagger). This is a design decision for now: a rule is missing for what a list should mean (replace or add), and a replace deletes the existing addresses.
 - **No anonymisation yet.** The email of a soft-deleted customer cannot be used again, and its addresses stay in the database (hidden from the API).
-- **Messenger has no failure transport.** A message that keeps failing is dropped after the retries.
+- **Failed Messenger messages are not retried automatically.** A message that still fails after the retries is stored in the `failed` transport; an admin looks at it with `messenger:failed:show` and sends it again with `messenger:failed:retry`.
 - **Request logging (dev only).** `LogRequestAndResponseEventListener` writes the request headers (`x-api-key`, `authorization` and `cookie` are masked as `***`) and the full response body to `var/log/request/` (kept for 90 days). Do not use it with real data.
 
 ## License
