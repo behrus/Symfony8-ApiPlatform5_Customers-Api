@@ -163,6 +163,7 @@ docker compose exec web php bin/console doctrine:schema:validate         # entit
 - **Tokens do not expire.** They are stored as SHA-256 hashes and shown once; an admin revokes a token with `DELETE /api/api_tokens/{id}`.
 - **Addresses inside `PUT` or `PATCH /api/customers` are ignored** (no error, and they are not part of the request schema in Swagger). This is a design decision for now: a rule is missing for what a list should mean (replace or add), and a replace deletes the existing addresses.
 - **No anonymisation yet.** The email of a soft-deleted customer cannot be used again, and its addresses stay in the database (hidden from the API).
+- **Migrations are not tested with old data.** The project is not meant for production, so the migrations only run on an empty database (CI) or on a development database that holds nothing but fixtures, which `init` rebuilds on every start. An upgrade with existing data is not tested. With real data, a migration that adds `NOT NULL` or a foreign key should be tested with old data first.
 - **Failed Messenger messages are not retried automatically.** A message that still fails after the retries is stored in the `failed` transport; an admin looks at it with `messenger:failed:show` and sends it again with `messenger:failed:retry`.
 - **Request logging (dev only).** `LogRequestAndResponseEventListener` writes the request headers (`x-api-key`, `authorization` and `cookie` are masked as `***`) and the full response body to `var/log/request/` (kept for 90 days). Do not use it with real data.
 
